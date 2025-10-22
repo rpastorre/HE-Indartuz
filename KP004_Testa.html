@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="eu">
+<head>
+    <meta charset="UTF-8">
+    <title id="title-text">Test Interaktiboa</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #controls {
+            margin-bottom: 2px; 
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        #feedback {
+            font-size: 1.1em;
+            min-height: 20px;
+            margin-top: 10px;
+        }
+        #score-display {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .final-score {
+            font-size: 1.5em;
+            color: #007bff;
+        }
+        .level-up-message {
+            font-size: 1.3em;
+            color: #28a745; 
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .venn-svg-container {
+            width: 80%; 
+            max-width: 800px;
+            margin: 2px auto 20px auto; 
+        }
+
+        /* --- CÓDIGO DE COLORES PARA LOS NIVELES --- */
+        .level-cero, .level-zero {
+            color: #C0C0C0; /* Gris claro */
+            font-weight: bold;
+        }
+        .level-iniciacion, .level-hastapena {
+            color: #4CAF50; /* Verde claro */
+            font-weight: bold;
+        }
+        .level-medio, .level-ertaina {
+            color: #FFC107; /* Amarillo/Ámbar */
+            font-weight: bold;
+        }
+        .level-avanzado, .level-aurreratua {
+            color: #E91E63; /* Rosa fuerte/Rojo */
+            font-weight: bold;
+        }
+        /* ------------------------------------------- */
+        
+        .venn-region {
+            fill: #f0f0f0; 
+            opacity: 0.6; 
+            stroke: none;
+            cursor: pointer;
+            transition: fill 0.3s, opacity 0.3s;
+        }
+        .selected { fill: #4fc3f7 !important; opacity: 0.9 !important; } 
+        .correct { fill: #81c784 !important; opacity: 0.9 !important; }
+        .incorrect { fill: #e57373 !important; opacity: 0.9 !important; }
+        .missing { fill: #ffb74d !important; opacity: 0.9 !important; }
+        .venn-label { font-size: 30px; fill: black; font-weight: bold; }
+        
+        #language-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+        #restart-button {
+            padding: 10px 20px;
+            margin: 20px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <button id="language-toggle" onclick="toggleLanguage()">Euskara / Español</button>
+    <h1 id="main-title">Eragiketak Multzoekin</h1>
+
+    <div id="controls">
+        <div id="score-display">Puntuazioa: <span id="current-score">0</span> / <span id="total-questions">10</span></div>
+        <h2 id="question"></h2>
+        <button id="check-button" onclick="checkAnswer()">Erantzuna Egiaztatu</button>
+        <button id="next-button" onclick="nextQuestion()" style="display:none;">Hurrengo Galdera</button>
+        <button id="finish-button" onclick="showFinalScore()" style="display:none;">Amaitu Testa</button>
+        <p id="feedback"></p>
+        <button id="restart-button" onclick="restartTest()" style="display:none;"></button>
+    </div>
+
+    <div class="venn-svg-container">
+        <svg width="100%" height="auto" viewBox="0 0 1280 720" version="1.1" id="svg-venn">
+            
+                
+                <g id="regions-interactive">
+                    
+                    <path
+                        d="m 858.346,107.275 c -73.077,0 -140.965,15.943 -197.279,43.247 L 640.5,161.559 619.934,150.522 c -56.315,-27.304 -124.203,-43.247 -197.28,-43.247 -194.872,0 -352.8462,113.373 -352.8462,253.225 0,139.852 157.9742,253.225 352.8462,253.225 73.077,0 140.965,-15.943 197.28,-43.247 l 20.566,-11.037 20.567,11.037 c 56.314,27.304 124.202,43.247 197.279,43.247 194.874,0 352.844,-113.373 352.844,-253.225 0,-139.852 -157.97,-253.225 -352.844,-253.225 z M 43.3904,0.500053 H 1237.61 c 23.69,0 42.89,19.202747 42.89,42.890347 V 677.61 c 0,23.687 -19.2,42.89 -42.89,42.89 H 43.3904 C 19.7028,720.5 0.500053,701.297 0.500053,677.61 V 43.3904 C 0.500053,19.7028 19.7028,0.500053 43.3904,0.500053 Z"
+                        class="venn-region"
+                        onclick="toggleRegion('RE')"
+                        id="RE" />
+                        
+                    <path
+                        d="m 422.536,107.5 c 73.117,0 141.041,15.929 197.386,43.208 l 20.578,11.028 -6.6,3.537 c -78.462,46.404 -128.473,116.63 -128.473,195.227 0,78.597 50.011,148.823 128.473,195.227 l 6.6,3.537 -20.578,11.028 C 563.577,597.571 495.653,613.5 422.536,613.5 227.56,613.5 69.5001,500.228 69.5001,360.5 c 0,-139.728 158.0599,-253 353.0359,-253 z"
+                        class="venn-region"
+                        onclick="toggleRegion('RA')"
+                        id="RA" />
+                    
+                    <path
+                        d="m 858.464,107.5 c 194.976,0 353.036,113.272 353.036,253 0,139.728 -158.06,253 -353.036,253 -73.117,0 -141.041,-15.929 -197.386,-43.208 l -20.578,-11.028 6.6,-3.537 C 725.562,509.323 775.573,439.097 775.573,360.5 775.573,281.903 725.562,211.677 647.1,165.273 l -6.6,-3.537 20.578,-11.028 C 717.423,123.429 785.347,107.5 858.464,107.5 Z"
+                        class="venn-region"
+                        onclick="toggleRegion('RB')"
+                        id="RB" />
+                        
+                    <path
+                        d="m 640.5,161.5 6.597,3.541 C 725.516,211.5 775.5,281.81 775.5,360.5 c 0,78.69 -49.984,149 -128.403,195.459 l -6.597,3.541 -6.597,-3.541 C 555.484,509.5 505.5,439.19 505.5,360.5 c 0,-78.69 49.984,-149 128.403,-195.459 z"
+                        class="venn-region"
+                        onclick="toggleRegion('RI')"
+                        id="RI" />
+                </g>
+
+                <g id="borders-static" style="pointer-events: none;">
+
+                    <path
+                        d="M 0,42.8906 C 0,19.2028 19.2028,0 42.8906,0 H 1237.11 C 1260.8,0 1280,19.2028 1280,42.8906 V 677.109 C 1280,700.797 1260.8,720 1237.11,720 H 42.8906 C 19.2028,720 0,700.797 0,677.109 Z"
+                        stroke="#92d050"
+                        stroke-width="6"
+                        fill="none"
+                        id="path-border-E" />
+                        
+                    <path
+                        d="M 69,360 C 69,220.272 227.043,107 422,107 616.956,107 775,220.272 775,360 775,499.728 616.956,613 422,613 227.043,613 69,499.728 69,360 Z"
+                        stroke="#c55a11"
+                        stroke-width="6"
+                        fill="none"
+                        id="path-border-A" />
+                        
+                    <path
+                        d="m 505,360 c 0,-139.728 158.043,-253 353,-253 194.96,0 353,113.272 353,253 0,139.728 -158.04,253 -353,253 C 663.043,613 505,499.728 505,360 Z"
+                        stroke="#8faadc"
+                        stroke-width="6"
+                        fill="none"
+                        id="path-border-B" />
+
+                    <text x="150" y="150" class="venn-label">A</text>
+                    <text x="1100" y="150" class="venn-label">B</text>
+                    <text x="1220" y="50" class="venn-label">E</text>
+
+                </g>
+        </svg>
+    </div>
+    <script>
+    
+    // ====================================================================
+    // 🚩 VARIABLE DE CONTROL DE COMPORTAMIENTO
+    // ====================================================================
+    // true: El test termina inmediatamente al primer error.
+    // false: Permite reintentos en cada pregunta y sigue hasta el final.
+    const stopIfError = true; 
+    // ====================================================================
+
+
+    // 1. Base de datos de preguntas (sin cambios)
+    const questions = [
+    // --- NIVEL INICIACIÓN (Q1 - Q10) ---
+    { operation_es: "A (Conjunto A)", operation_eu: "A (A Multzoa)", correctRegions: ['RA', 'RI'], level_es: 'cero', level_eu: 'zero', answered: false, correct: false },
+    { operation_es: "B (Conjunto B)", operation_eu: "B (B Multzoa)", correctRegions: ['RB', 'RI'], level_es: 'cero', level_eu: 'zero', answered: false, correct: false },
+    { operation_es: "<span style='text-decoration: overline;'>A</span> (Complemento de A)", operation_eu: "<span style='text-decoration: overline;'>A</span> (A-ren osagarria)", correctRegions: ['RB', 'RE'], level_es: 'iniciacion', level_eu: 'hastapena', answered: false, correct: false },
+    { operation_es: "<span style='text-decoration: overline;'>B</span> (Complemento de B)", operation_eu: "<span style='text-decoration: overline;'>B</span> (B-ren osagarria)", correctRegions: ['RA', 'RE'], level_es: 'iniciacion', level_eu: 'hastapena', answered: false, correct: false },
+    { operation_es: "A ∪ B (Unión)", operation_eu: "A ∪ B (Bildura)", correctRegions: ['RA', 'RI', 'RB'], level_es: 'iniciacion', level_eu: 'hastapena', answered: false, correct: false },
+    { operation_es: "A ∩ B (Intersección)", operation_eu: "A ∩ B (Ebakidura)", correctRegions: ['RI'], level_es: 'iniciacion', level_eu: 'hastapena', answered: false, correct: false },
+    { operation_es: "A - B (Diferencia: Solo A)", operation_eu: "A - B (Kendura: A bakarrik)", correctRegions: ['RA'], level_es: 'iniciacion', level_eu: 'hastapena', answered: false, correct: false },
+    { operation_es: "B - A (Diferencia: Solo B)", operation_eu: "B - A (Kendura: B bakarrik)", correctRegions: ['RB'], level_es: 'iniciacion', level_eu: 'hastapena', answered: false, correct: false },
+    { operation_es: "<span style='text-decoration: overline;'>A ∪ B</span> (Complemento de la Unión)", operation_eu: "<span style='text-decoration: overline;'>A ∪ B</span> (Bilduraren osagarria)", correctRegions: ['RE'], level_es: 'iniciacion', level_eu: 'hastapena', answered: false, correct: false },
+    { operation_es: "<span style='text-decoration: overline;'>A ∩ B</span> (Complemento de la Intersección)", operation_eu: "<span style='text-decoration: overline;'>A ∩ B</span> (Ebakiduraren osagarria)", correctRegions: ['RA', 'RB', 'RE'], level_es: 'iniciacion', level_eu: 'hastapena', answered: false, correct: false },
+
+    // --- NIVEL MEDIO (Q11 - Q20) ---
+    { operation_es: "<span style='text-decoration: overline;'>A</span> ∪ <span style='text-decoration: overline;'>B</span>", operation_eu: "<span style='text-decoration: overline;'>A</span> ∪ <span style='text-decoration: overline;'>B</span>", correctRegions: ['RA', 'RB', 'RE'], level_es: 'medio', level_eu: 'ertaina', answered: false, correct: false },
+    { operation_es: "<span style='text-decoration: overline;'>A</span> ∩ <span style='text-decoration: overline;'>B</span>", operation_eu: "<span style='text-decoration: overline;'>A</span> ∩ <span style='text-decoration: overline;'>B</span>", correctRegions: ['RE'], level_es: 'medio', level_eu: 'ertaina', answered: false, correct: false },
+    { operation_es: "A ∩ <span style='text-decoration: overline;'>B</span>", operation_eu: "A ∩ <span style='text-decoration: overline;'>B</span>", correctRegions: ['RA'], level_es: 'medio', level_eu: 'ertaina', answered: false, correct: false },
+    { operation_es: "B ∩ <span style='text-decoration: overline;'>A</span>", operation_eu: "B ∩ <span style='text-decoration: overline;'>A</span>", correctRegions: ['RB'], level_es: 'medio', level_eu: 'ertaina', answered: false, correct: false },
+    { operation_es: "A ∪ <span style='text-decoration: overline;'>B</span>", operation_eu: "A ∪ <span style='text-decoration: overline;'>B</span>", correctRegions: ['RA', 'RI', 'RE'], level_es: 'medio', level_eu: 'ertaina', answered: false, correct: false },
+    { operation_es: "B ∪ <span style='text-decoration: overline;'>A</span>", operation_eu: "B ∪ <span style='text-decoration: overline;'>A</span>", correctRegions: ['RB', 'RI', 'RE'], level_es: 'medio', level_eu: 'ertaina', answered: false, correct: false },
+    { operation_es: "<span style='text-decoration: overline;'>A</span> ∪ (A ∩ B)", operation_eu: "<span style='text-decoration: overline;'>A</span> ∪ (A ∩ B)", correctRegions: ['RI', 'RB', 'RE'], level_es: 'medio', level_eu: 'ertaina', answered: false, correct: false },
+    { operation_es: "(A ∩ B) ∪ (A ∪ B)̄", operation_eu: "(A ∩ B) ∪ (A ∪ B)̄", correctRegions: ['RI', 'RE'], level_es: 'medio', level_eu: 'ertaina', answered: false, correct: false },
+    { operation_es: "A ∩ (B ∪ <span style='text-decoration: overline;'>A</span>)", operation_eu: "A ∩ (B ∪ <span style='text-decoration: overline;'>A</span>)", correctRegions: ['RI'], level_es: 'medio', level_eu: 'ertaina', answered: false, correct: false },
+    { operation_es: "B ∪ (A ∩ <span style='text-decoration: overline;'>B</span>)", operation_eu: "B ∪ (A ∩ <span style='text-decoration: overline;'>B</span>)", correctRegions: ['RA', 'RI', 'RB'], level_es: 'medio', level_eu: 'ertaina', answered: false, correct: false },
+
+    // --- NIVEL AVANZADO (Q21 - Q30) ---
+    { operation_es: "A Δ B (Diferencia Simétrica)", operation_eu: "A Δ B (Kendura Simetrikoa)", correctRegions: ['RA', 'RB'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
+    { operation_es: "(<span style='text-decoration: overline;'>A</span> ∪ <span style='text-decoration: overline;'>B</span>) ∩ (A ∪ B)", operation_eu: "(<span style='text-decoration: overline;'>A</span> ∪ <span style='text-decoration: overline;'>B</span>) ∩ (A ∪ B)", correctRegions: ['RA', 'RB'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
+    { operation_es: "(A ∩ B) ∪ (<span style='text-decoration: overline;'>A</span> ∩ <span style='text-decoration: overline;'>B</span>)", operation_eu: "(A ∩ B) ∪ (<span style='text-decoration: overline;'>A</span> ∩ <span style='text-decoration: overline;'>B</span>)", correctRegions: ['RI', 'RE'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
+    { operation_es: "A ∩ (A ∪ B)", operation_eu: "A ∩ (A ∪ B)", correctRegions: ['RA', 'RI'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
+    { operation_es: "A ∪ (A ∩ B)", operation_eu: "A ∪ (A ∩ B)", correctRegions: ['RA', 'RI'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
+    { operation_es: "<span style='text-decoration: overline;'>B</span> - A", operation_eu: "<span style='text-decoration: overline;'>B</span> - A", correctRegions: ['RE'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
+    { operation_es: "<span style='text-decoration: overline;'>A - B</span> ∩ (B - A)̄", operation_eu: "<span style='text-decoration: overline;'>A - B</span> ∩ (B - A)̄", correctRegions: ['RI', 'RE'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
+    { operation_es: "(A ∪ B) ∩ (A ∩ B)̄", operation_eu: "(A ∪ B) ∩ (A ∩ B)̄", correctRegions: ['RA', 'RB'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
+    { operation_es: "A ∩ <span style='text-decoration: overline;'>A ∪ B</span>", operation_eu: "A ∩ <span style='text-decoration: overline;'>A ∪ B</span>", correctRegions: [], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
+    { operation_es: "(A ∪ B) ∪ <span style='text-decoration: overline;'>A ∪ B</span>", operation_eu: "(A ∪ B) ∪ <span style='text-decoration: overline;'>A ∪ B</span>", correctRegions: ['RA', 'RI', 'RB', 'RE'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false }
+   ];
+
+    // 2. Tabla de traducciones para el UI (actualizada para mensaje de reinicio)
+    const translations = {
+        es: {
+            title: "Operaciones con Conjuntos",
+            title_doc: "Test Interactivo",
+            score: "Puntuación:",
+            check_button: "Comprobar Respuesta",
+            next_button: "Siguiente Pregunta",
+            finish_button: "Finalizar Test",
+            q_prefix: "Pregunta",
+            q_suffix: "(Colorea la operación)",
+            feedback_check_needed: "<span style='color: orange;'>Por favor, selecciona las regiones y pulsa 'Comprobar Respuesta'.</span>",
+            feedback_correct: "<span style='color: green; font-weight: bold;'>¡Correcto!. Pulsa 'Siguiente Pregunta'.</span>",
+            feedback_incorrect: "<span style='color: red; font-weight: bold;'>Incorrecto.</span> <span style='color: orange;'>Revisa tu respuesta o pulsa 'Siguiente Pregunta'.</span>",
+            feedback_abort: "<span style='color: red; font-weight: bold;'>¡ERROR! El test ha sido interrumpido.</span>",
+            feedback_retry: "Continúa seleccionando/deseleccionando las regiones y pulsa 'Comprobar Respuesta' de nuevo.",
+            level_fail: "Nivel [LEVEL_NAME] incompleto. Has fallado al menos una pregunta. Continúa para intentar el siguiente nivel.",
+            level_pass: "¡Nivel [LEVEL_NAME] Superado! Pulsa \"Siguiente Pregunta\" para el nivel [NEXT_LEVEL_NAME].",
+            final_title: "<span class='final-score'>TEST FINALIZADO</span>",
+            final_abort_title: "<span class='final-score' style='color: red;'>TEST INTERRUMPIDO POR ERROR</span>",
+            final_score_msg: "Has respondido correctamente [SCORE] de [TOTAL] preguntas. ([PERCENTAGE]%).",
+            final_level_msg_pass: "¡Felicidades! Has superado el nivel: [LEVEL_NAME].",
+            final_level_msg_fail: "Necesitas responder todas las de Iniciación correctamente para conseguir un nivel.",
+            q_all_done: "Has completado todas las preguntas.",
+            q_finish_prompt: "Pulsa 'Finalizar Test' para ver tu puntuación y el nivel conseguido.",
+            level_cero: "Nivel cero",
+            level_iniciacion: "Iniciación",
+            level_medio: "Medio",
+            level_avanzado: "Avanzado",
+            restart_button: "Reiniciar Test"
+        },
+        eu: {
+            title: "Eragiketak Multzoekin",
+            title_doc: "Test Interaktiboa",
+            score: "Puntuazioa:",
+            check_button: "Erantzuna Egiaztatu",
+            next_button: "Hurrengo Galdera",
+            finish_button: "Amaitu Testa",
+            q_prefix: "Galdera",
+            q_suffix: "(Eragiketaren emaitza koloreztatu)",
+            feedback_check_needed: "<span style='color: orange;'>Mesedez, hautatu eskualdeak eta sakatu 'Erantzuna Egiaztatu'.</span>",
+            feedback_correct: "<span style='color: green; font-weight: bold;'>Zuzena! Sakatu 'Hurrengo Galdera'.</span>",
+            feedback_incorrect: "<span style='color: red; font-weight: bold;'>Okerra.</span> <span style='color: orange;'>Berrikusi erantzuna edo sakatu 'Hurrengo Galdera'.</span>",
+            feedback_abort: "<span style='color: red; font-weight: bold;'>¡AKATSA! Testa eten egin da.</span>",
+            feedback_retry: "Jarraitu eskualdeak hautatzen/deshautatzen eta sakatu 'Erantzuna Egiaztatu' berriro.",
+            level_fail: "[LEVEL_NAME] maila osatu gabe. Gutxienez galdera bat huts egin duzu. Jarraitu hurrengo maila probatzeko.",
+            level_pass: "[LEVEL_NAME] maila gaindituta! Sakatu \"Hurrengo Galdera\" [NEXT_LEVEL_NAME] mailarako.",
+            final_title: "<span class='final-score'>TESTA AMAITUTA</span>",
+            final_abort_title: "<span class='final-score' style='color: red;'>AKATSAREN BIDEZ ETENDAKO TESTA</span>",
+            final_score_msg: "[SCORE] galderatik [TOTAL] zuzen erantzun dituzu. ([PERCENTAGE]%).",
+            final_level_msg_pass: "Zorionak! Maila hau gainditu duzu: [LEVEL_NAME].",
+            final_level_msg_fail: "Hastapeneko guztiak zuzen erantzun behar dituzu maila bat lortzeko.",
+            q_all_done: "Galdera guztiak amaitu dituzu.",
+            q_finish_prompt: "Sakatu 'Testa Amaitu' zure puntuazioa eta lortutako maila ikusteko.",
+            level_cero: "Zero maila",
+            level_iniciacion: "Hastapena",
+            level_medio: "Ertaina",
+            level_avanzado: "Aurreratua",
+            restart_button: "Testa Berriro Hasi"
+        }
+    };
+
+    let currentQuestionIndex = 0;
+    let selectedRegions = new Set();
+    let score = 0;
+    const allRegions = ['RA', 'RB', 'RI', 'RE'];
+    const totalQuestions = questions.length;
+    const level_keys = ['cero', 'iniciacion', 'medio', 'avanzado']; // Se usan las keys en español para la lógica interna
+    let currentLanguage = 'eu'; // 🚩 Euskera por defecto
+    let testAborted = false; // 🚩 Nuevo flag para el control de flujo
+
+    document.getElementById('total-questions').textContent = totalQuestions;
+
+    // 🚩 FUNCIÓN CLAVE DE TRADUCCIÓN
+    function getTranslation(key) {
+        return translations[currentLanguage][key];
+    }
+
+    // 🚩 FUNCIÓN CLAVE: Actualiza todos los elementos de la UI
+    function updateUI() {
+        // Títulos
+        document.getElementById('title-text').textContent = getTranslation('title_doc');
+        document.getElementById('main-title').textContent = getTranslation('title');
+        
+        // Puntuación
+        document.getElementById('score-display').innerHTML = 
+            `${getTranslation('score')} <span id="current-score">${score}</span> / <span id="total-questions">${totalQuestions}</span>`;
+        
+        // Botones
+        document.getElementById('check-button').textContent = getTranslation('check_button');
+        document.getElementById('next-button').textContent = getTranslation('next_button');
+        document.getElementById('finish-button').textContent = getTranslation('finish_button');
+        document.getElementById('restart-button').textContent = getTranslation('restart_button');
+        
+        // Carga la pregunta con el idioma correcto
+        loadQuestion();
+        
+        // Limpia feedback (para evitar que se traduzca mal un feedback que ya no es relevante)
+        document.getElementById('feedback').textContent = '';
+    }
+
+    // 🚩 FUNCIÓN CLAVE: Alterna el idioma
+    function toggleLanguage() {
+        currentLanguage = currentLanguage === 'eu' ? 'es' : 'eu';
+        document.documentElement.lang = currentLanguage;
+        updateUI();
+    }
+    
+    function updateScoreDisplay() {
+        document.getElementById('current-score').textContent = score;
+    }
+
+    function checkLevelCompletion(levelKey) {
+        const levelQuestions = questions.filter(q => q[`level_es`] === levelKey);
+        // Sólo se considera superado si TODAS han sido respondidas Y TODAS son correctas
+        // Se utiliza .slice(0, currentQuestionIndex + 1) para considerar solo las preguntas ya vistas.
+        const allAnsweredCorrectlyInLevel = levelQuestions.filter(q => q.answered).every(q => q.correct);
+        const allQuestionsInLevelAnswered = levelQuestions.every(q => q.answered);
+
+        // Si el test terminó por error, solo chequeamos lo que se ha visto y es correcto
+        if (testAborted) {
+            return levelQuestions.slice(0, currentQuestionIndex).every(q => q.correct);
+        }
+
+        // Si el test se completó
+        return allAnsweredCorrectlyInLevel && allQuestionsInLevelAnswered;
+    }
+
+    function toggleRegion(regionId) {
+        // Si el test ha sido abortado, no se permite interacción con el diagrama
+        if (testAborted) return;
+
+        const regionElement = document.getElementById(regionId);
+        
+        if (selectedRegions.has(regionId)) {
+            selectedRegions.delete(regionId);
+            regionElement.classList.remove('selected');
+        } else {
+            selectedRegions.add(regionId);
+            regionElement.classList.add('selected');
+        }
+        
+        // Al hacer click, limpiar el feedback de "Incorrecto" y el resaltado visual
+        resetVisualFeedback();
+    }
+    
+    // Limpia el feedback visual de Correcto/Incorrecto/Missing
+    function resetVisualFeedback() {
+        document.getElementById('feedback').textContent = '';
+        allRegions.forEach(id => {
+            document.getElementById(id).classList.remove('correct', 'incorrect', 'missing');
+        });
+        // Ocultar Next/Finish y mostrar Check
+        document.getElementById('check-button').style.display = 'inline'; 
+        document.getElementById('next-button').style.display = 'none';
+        document.getElementById('finish-button').style.display = 'none';
+    }
+
+    // 🚩 Nueva función para la finalización abrupta (stopIfError = true)
+    function showFinalScoreOnAborted() {
+        testAborted = true;
+        const questionsAnswered = currentQuestionIndex; // El error ocurrió en esta pregunta
+
+        let finalLevelMessage = '';
+        let highestLevelAchievedKey = 'ninguno';
+
+        // Determinar el nivel más alto conseguido (solo de lo que se ha visto y es correcto)
+        for (let i = 0; i < level_keys.length; i++) {
+            const levelKey = level_keys[i];
+            const levelQuestions = questions.filter(q => q[`level_es`] === levelKey);
+            const allCorrectInLevel = levelQuestions.slice(0, questionsAnswered).every(q => q.correct);
+            
+            if (allCorrectInLevel) {
+                highestLevelAchievedKey = levelKey;
+            } else {
+                break;
+            }
+        }
+        
+        const highestLevelName = getTranslation(`level_${highestLevelAchievedKey}`);
+
+        // 2. Construir el mensaje de nivel
+        if (highestLevelAchievedKey !== 'ninguno') {
+            const passMsg = getTranslation('final_level_msg_pass').replace('[LEVEL_NAME]', highestLevelName);
+            finalLevelMessage = `<div class="level-up-message">${passMsg}</div>`;
+        } else {
+             finalLevelMessage = `<div class="level-up-message" style="color: #ffc107;">${getTranslation('final_level_msg_fail')}</div>`;
+        }
+        
+        // 3. Construir el mensaje de puntuación
+        let scoreMessage = getTranslation('final_score_msg')
+            .replace('[SCORE]', score)
+            .replace('[TOTAL]', totalQuestions)
+            .replace('[PERCENTAGE]', ((score / totalQuestions) * 100).toFixed(0));
+
+        // 4. Mostrar todo
+        document.getElementById('question').innerHTML = getTranslation('final_abort_title');
+        document.getElementById('feedback').innerHTML = finalLevelMessage + scoreMessage;
+
+        // Ocultar botones y mostrar Reiniciar
+        document.getElementById('score-display').style.display = 'none';
+        document.getElementById('next-button').style.display = 'none';
+        document.getElementById('check-button').style.display = 'none'; 
+        document.getElementById('finish-button').style.display = 'none';
+        document.getElementById('restart-button').style.display = 'inline';
+    }
+
+
+    function showFinalScore() {
+        // Lógica de finalización normal (sin cambios relevantes)
+        const percentage = (score / totalQuestions) * 100;
+        let finalLevelMessage = '';
+        let highestLevelAchievedKey = 'ninguno';
+
+        for (let i = 0; i < level_keys.length; i++) {
+            const levelKey = level_keys[i];
+            if (checkLevelCompletion(levelKey)) {
+                highestLevelAchievedKey = levelKey;
+            } else {
+                break;
+            }
+        }
+        
+        const highestLevelName = getTranslation(`level_${highestLevelAchievedKey}`);
+
+        if (highestLevelAchievedKey !== 'ninguno') {
+            const passMsg = getTranslation('final_level_msg_pass').replace('[LEVEL_NAME]', highestLevelName);
+            finalLevelMessage = `<div class="level-up-message">${passMsg}</div>`;
+        } else {
+             finalLevelMessage = `<div class="level-up-message" style="color: #ffc107;">${getTranslation('final_level_msg_fail')}</div>`;
+        }
+
+        let scoreMessage = getTranslation('final_score_msg')
+            .replace('[SCORE]', score)
+            .replace('[TOTAL]', totalQuestions)
+            .replace('[PERCENTAGE]', percentage.toFixed(0));
+
+        document.getElementById('question').innerHTML = getTranslation('final_title');
+        document.getElementById('feedback').innerHTML = finalLevelMessage + scoreMessage;
+
+        document.getElementById('next-button').style.display = 'none';
+        document.getElementById('check-button').style.display = 'none'; 
+        document.getElementById('finish-button').style.display = 'none';
+        document.getElementById('restart-button').style.display = 'inline';
+    }
+
+    function nextQuestion() {
+        if (testAborted) return; // Si el test fue abortado, no avanzar.
+
+        const currentQ = questions[currentQuestionIndex];
+
+        // Validar que la pregunta actual esté respondida (correcta o incorrecta definitiva)
+        if (!currentQ.answered) {
+            document.getElementById('feedback').innerHTML = getTranslation('feedback_check_needed');
+            return;
+        }
+
+        const currentLevelKey = currentQ.level_es;
+        const nextQ = questions[currentQuestionIndex + 1];
+        
+        // Lógica de cambio de nivel
+        if (nextQ && nextQ.level_es !== currentLevelKey) {
+            const currentLevelName = getTranslation(`level_${currentLevelKey}`);
+            const nextLevelKey = nextQ.level_es;
+            const nextLevelName = getTranslation(`level_${nextLevelKey}`);
+            
+            if (checkLevelCompletion(currentLevelKey)) {
+                const passMsg = getTranslation('level_pass')
+                    .replace('[LEVEL_NAME]', currentLevelName.toUpperCase())
+                    .replace('[NEXT_LEVEL_NAME]', nextLevelName);
+                document.getElementById('feedback').innerHTML = 
+                    `<span class="level-up-message">${passMsg}</span>`;
+            } else {
+                const failMsg = getTranslation('level_fail')
+                    .replace('[LEVEL_NAME]', currentLevelName.toUpperCase());
+                document.getElementById('feedback').innerHTML = 
+                    `<span style='color: red;'>${failMsg}</span>`;
+            }
+        }
+        
+        currentQuestionIndex++;
+        
+        if (currentQuestionIndex < totalQuestions) {
+            resetDiagram();
+            loadQuestion();
+        } else {
+            document.getElementById('next-button').style.display = 'none';
+            document.getElementById('check-button').style.display = 'none'; 
+            document.getElementById('finish-button').style.display = 'inline';
+            document.getElementById('question').textContent = getTranslation('q_all_done');
+            document.getElementById('feedback').textContent = getTranslation('q_finish_prompt');
+        }
+    }
+
+    function resetDiagram() {
+        selectedRegions.clear();
+        document.getElementById('feedback').textContent = '';
+        allRegions.forEach(id => {
+            const el = document.getElementById(id);
+            el.classList.remove('selected', 'correct', 'incorrect', 'missing');
+        });
+        
+        document.getElementById('check-button').style.display = 'inline'; 
+        document.getElementById('next-button').style.display = 'none';
+        document.getElementById('finish-button').style.display = 'none';
+        
+        // Asegurar que la nueva pregunta NO esté marcada como respondida al cargarla
+        if (questions[currentQuestionIndex]) {
+            questions[currentQuestionIndex].answered = false;
+        }
+    }
+
+    function loadQuestion() {
+        if (testAborted) return; // No cargar preguntas si el test está abortado
+        
+        const question = questions[currentQuestionIndex];
+        const levelKey = question[`level_es`];
+        const levelName = getTranslation(`level_${levelKey}`);
+        const operationText = question[`operation_${currentLanguage}`];
+        
+        const levelClass = getTranslation(`level_${levelKey}`).toLowerCase().replace('á', 'a').replace('ó', 'o'); 
+        
+        const coloredLevelSpan = `<span class="level-${levelClass}">(${levelName})</span>`;
+
+        document.getElementById('question').innerHTML = 
+            `${getTranslation('q_prefix')} ${currentQuestionIndex + 1}/${totalQuestions} ${coloredLevelSpan}<br><small><small>${getTranslation('q_suffix')}</small></small><br><h2>${operationText}</h2>`;
+    }
+
+    // 🚩 FUNCIÓN CLAVE MODIFICADA: Implementa el control de stopIfError
+    function checkAnswer() {
+        const question = questions[currentQuestionIndex];
+        
+        if (question.correct) return; 
+
+        if (selectedRegions.size === 0) {
+            document.getElementById('feedback').innerHTML = getTranslation('feedback_check_needed');
+            return;
+        }
+
+        const correctRegions = question.correctRegions;
+        const userSelected = Array.from(selectedRegions).sort();
+        const correctRequired = correctRegions.sort();
+
+        let isCorrect = (userSelected.length === correctRequired.length) && 
+                      userSelected.every((value, index) => value === correctRequired[index]);
+
+        const feedback = document.getElementById('feedback');
+        
+        if (isCorrect) {
+            score++;
+            question.correct = true; 
+            question.answered = true;
+            updateScoreDisplay(); 
+
+            feedback.innerHTML = getTranslation('feedback_correct');
+            allRegions.forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.remove('selected'); 
+                if (correctRegions.includes(id)) {
+                    el.classList.add('correct');
+                }
+            });
+
+            document.getElementById('check-button').style.display = 'none';
+            document.getElementById('next-button').style.display = 'inline';
+
+        } else {
+            question.correct = false; 
+
+            // =========================================================
+            // LÓGICA DE INTERRUPCIÓN
+            // =========================================================
+            if (stopIfError) {
+                // Marcar como respondida para el cálculo de nivel final
+                question.answered = true; 
+                showFinalScoreOnAborted();
+                return; // Detener la ejecución de la función
+            }
+            // =========================================================
+            
+            // Lógica de reintento si stopIfError es FALSE
+            feedback.innerHTML = getTranslation('feedback_incorrect');
+            
+            allRegions.forEach(id => {
+                const isSelected = selectedRegions.has(id);
+                const isRequired = correctRegions.includes(id);
+                const el = document.getElementById(id);
+                
+                el.classList.remove('selected'); 
+                el.classList.remove('correct', 'incorrect', 'missing');
+                
+                if (isSelected && isRequired) {
+                    el.classList.add('correct'); 
+                } else if (isSelected && !isRequired) {
+                    el.classList.add('incorrect'); 
+                } else if (!isSelected && isRequired) {
+                    el.classList.add('missing'); 
+                }
+            });
+            
+            question.answered = true; 
+
+            document.getElementById('check-button').style.display = 'inline';
+            document.getElementById('next-button').style.display = 'inline'; 
+        }
+    }
+    
+    // 🚩 Nueva función para reiniciar el test
+    function restartTest() {
+        currentQuestionIndex = 0;
+        score = 0;
+        testAborted = false;
+        
+        // Resetear el estado de todas las preguntas
+        questions.forEach(q => {
+            q.answered = false;
+            q.correct = false;
+        });
+
+        document.getElementById('score-display').style.display = 'block';
+        document.getElementById('restart-button').style.display = 'none';
+        
+        updateScoreDisplay();
+        resetDiagram();
+        loadQuestion();
+    }
+
+    // Inicializar: cargar la UI en Euskera por defecto
+    updateUI();
+</script>
+</body>
+</html>
