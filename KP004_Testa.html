@@ -184,7 +184,8 @@
 
 
     // 1. Base de datos de preguntas (sin cambios)
-        // --- NIVEL INICIACIÓN (Q1 - Q10) ---
+    const questions = [
+    // --- NIVEL INICIACIÓN (Q1 - Q10) ---
     { operation_es: "A (Conjunto A)", operation_eu: "A (A Multzoa)", correctRegions: ['RA', 'RI'], level_es: 'cero', level_eu: 'zero', answered: false, correct: false },
     { operation_es: "B (Conjunto B)", operation_eu: "B (B Multzoa)", correctRegions: ['RB', 'RI'], level_es: 'cero', level_eu: 'zero', answered: false, correct: false },
     { operation_es: "<span style='text-decoration: overline;'>A</span> (Complemento de A)", operation_eu: "<span style='text-decoration: overline;'>A</span> (A-ren osagarria)", correctRegions: ['RB', 'RE'], level_es: 'iniciacion', level_eu: 'hastapena', answered: false, correct: false },
@@ -209,6 +210,8 @@
     { operation_es: "B ∪ (A ∩ <span style='text-decoration: overline;'>B</span>)", operation_eu: "B ∪ (A ∩ <span style='text-decoration: overline;'>B</span>)", correctRegions: ['RA', 'RI', 'RB'], level_es: 'medio', level_eu: 'ertaina', answered: false, correct: false },
 
     // --- NIVEL AVANZADO (Q21 - Q30) ---
+    { operation_es: "A ∩ <span style='text-decoration: overline;'>A ∪ B</span>", operation_eu: "A ∩ <span style='text-decoration: overline;'>A ∪ B</span>", correctRegions: [], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
+    { operation_es: "(A ∪ B) ∪ <span style='text-decoration: overline;'>A ∪ B</span>", operation_eu: "(A ∪ B) ∪ <span style='text-decoration: overline;'>A ∪ B</span>", correctRegions: ['RA', 'RI', 'RB', 'RE'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false }
     { operation_es: "A Δ B (Diferencia Simétrica)", operation_eu: "A Δ B (Kendura Simetrikoa)", correctRegions: ['RA', 'RB'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
     { operation_es: "(<span style='text-decoration: overline;'>A</span> ∪ <span style='text-decoration: overline;'>B</span>) ∩ (A ∪ B)", operation_eu: "(<span style='text-decoration: overline;'>A</span> ∪ <span style='text-decoration: overline;'>B</span>) ∩ (A ∪ B)", correctRegions: ['RA', 'RB'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
     { operation_es: "(A ∩ B) ∪ (<span style='text-decoration: overline;'>A</span> ∩ <span style='text-decoration: overline;'>B</span>)", operation_eu: "(A ∩ B) ∪ (<span style='text-decoration: overline;'>A</span> ∩ <span style='text-decoration: overline;'>B</span>)", correctRegions: ['RI', 'RE'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
@@ -217,8 +220,6 @@
     { operation_es: "<span style='text-decoration: overline;'>B</span> - A", operation_eu: "<span style='text-decoration: overline;'>B</span> - A", correctRegions: ['RE'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
     { operation_es: "<span style='text-decoration: overline;'>A - B</span> ∩ (B - A)̄", operation_eu: "<span style='text-decoration: overline;'>A - B</span> ∩ (B - A)̄", correctRegions: ['RI', 'RE'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
     { operation_es: "(A ∪ B) ∩ (A ∩ B)̄", operation_eu: "(A ∪ B) ∩ (A ∩ B)̄", correctRegions: ['RA', 'RB'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
-    { operation_es: "A ∩ <span style='text-decoration: overline;'>A ∪ B</span>", operation_eu: "A ∩ <span style='text-decoration: overline;'>A ∪ B</span>", correctRegions: [], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
-    { operation_es: "(A ∪ B) ∪ <span style='text-decoration: overline;'>A ∪ B</span>", operation_eu: "(A ∪ B) ∪ <span style='text-decoration: overline;'>A ∪ B</span>", correctRegions: ['RA', 'RI', 'RB', 'RE'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false }
    ];
 
     // 2. Tabla de traducciones para el UI (actualizada para mensaje de reinicio)
@@ -653,4 +654,3 @@
 </script>
 </body>
 </html>
-
