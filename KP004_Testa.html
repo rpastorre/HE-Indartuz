@@ -205,7 +205,7 @@
     { operation_es: "A ∪ <span style='text-decoration: overline;'>B</span>", operation_eu: "A ∪ <span style='text-decoration: overline;'>B</span>", correctRegions: ['RA', 'RI', 'RE'], level_es: 'medio', level_eu: 'ertaina', answered: false, correct: false },
     { operation_es: "B ∪ <span style='text-decoration: overline;'>A</span>", operation_eu: "B ∪ <span style='text-decoration: overline;'>A</span>", correctRegions: ['RB', 'RI', 'RE'], level_es: 'medio', level_eu: 'ertaina', answered: false, correct: false },
     { operation_es: "<span style='text-decoration: overline;'>A</span> ∪ (A ∩ B)", operation_eu: "<span style='text-decoration: overline;'>A</span> ∪ (A ∩ B)", correctRegions: ['RI', 'RB', 'RE'], level_es: 'medio', level_eu: 'ertaina', answered: false, correct: false },
-    { operation_es: "(A ∩ B) ∪ (A ∪ B)̄", operation_eu: "(A ∩ B) ∪ (A ∪ B)̄", correctRegions: ['RI', 'RE'], level_es: 'medio', level_eu: 'ertaina', answered: false, correct: false },
+    { operation_es: "(A ∩ B) ∪ <span style='text-decoration: overline;'>A ∪ B</span>, operation_eu: "(A ∩ B) ∪ <span style='text-decoration: overline;'>A ∪ B</span>", correctRegions: ['RI', 'RE'], level_es: 'medio', level_eu: 'ertaina', answered: false, correct: false },
     { operation_es: "A ∩ (B ∪ <span style='text-decoration: overline;'>A</span>)", operation_eu: "A ∩ (B ∪ <span style='text-decoration: overline;'>A</span>)", correctRegions: ['RI'], level_es: 'medio', level_eu: 'ertaina', answered: false, correct: false },
     { operation_es: "B ∪ (A ∩ <span style='text-decoration: overline;'>B</span>)", operation_eu: "B ∪ (A ∩ <span style='text-decoration: overline;'>B</span>)", correctRegions: ['RA', 'RI', 'RB'], level_es: 'medio', level_eu: 'ertaina', answered: false, correct: false },
 
@@ -218,7 +218,6 @@
     { operation_es: "<span style='text-decoration: overline;'>B</span> - A", operation_eu: "<span style='text-decoration: overline;'>B</span> - A", correctRegions: ['RE'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
     { operation_es: "<span style='text-decoration: overline;'>A - B</span> ∩ (B - A)̄", operation_eu: "<span style='text-decoration: overline;'>A - B</span> ∩ (B - A)̄", correctRegions: ['RI', 'RE'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
     { operation_es: "(A ∪ B) ∩ (A ∩ B)̄", operation_eu: "(A ∪ B) ∩ (A ∩ B)̄", correctRegions: ['RA', 'RB'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
-    { operation_es: "A ∩ <span style='text-decoration: overline;'>A ∪ B</span>", operation_eu: "A ∩ <span style='text-decoration: overline;'>A ∪ B</span>", correctRegions: [], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
     { operation_es: "(A ∪ B) ∪ <span style='text-decoration: overline;'>A ∪ B</span>", operation_eu: "(A ∪ B) ∪ <span style='text-decoration: overline;'>A ∪ B</span>", correctRegions: ['RA', 'RI', 'RB', 'RE'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false }
    ];
 
@@ -653,4 +652,5 @@
     updateUI();
 </script>
 </body>
+
 </html>
