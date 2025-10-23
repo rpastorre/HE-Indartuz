@@ -216,8 +216,8 @@
     { operation_es: "A ∩ (A ∪ B)", operation_eu: "A ∩ (A ∪ B)", correctRegions: ['RA', 'RI'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
     { operation_es: "A ∪ (A ∩ B)", operation_eu: "A ∪ (A ∩ B)", correctRegions: ['RA', 'RI'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
     { operation_es: "<span style='text-decoration: overline;'>B</span> - A", operation_eu: "<span style='text-decoration: overline;'>B</span> - A", correctRegions: ['RE'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
-    { operation_es: "<span style='text-decoration: overline;'>A - B</span> ∩ (B - A)̄", operation_eu: "<span style='text-decoration: overline;'>A - B</span> ∩ (B - A)̄", correctRegions: ['RI', 'RE'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
-    { operation_es: "(A ∪ B) ∩ (A ∩ B)̄", operation_eu: "(A ∪ B) ∩ (A ∩ B)̄", correctRegions: ['RA', 'RB'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
+    { operation_es: "<span style='text-decoration: overline;'>A - B</span> ∩ <span style='text-decoration: overline;'>B - A</span>", operation_eu: "<span style='text-decoration: overline;'>A - B</span> ∩ <span style='text-decoration: overline;'>B - A</span>", correctRegions: ['RI', 'RE'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
+    { operation_es: "(A ∪ B) ∩ <span style='text-decoration: overline;'>A ∩ B</span>", operation_eu: "(A ∪ B) ∩ <span style='text-decoration: overline;'>A ∩ B</span>", correctRegions: ['RA', 'RB'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false },
     { operation_es: "(A ∪ B) ∪ <span style='text-decoration: overline;'>A ∪ B</span>", operation_eu: "(A ∪ B) ∪ <span style='text-decoration: overline;'>A ∪ B</span>", correctRegions: ['RA', 'RI', 'RB', 'RE'], level_es: 'avanzado', level_eu: 'aurreratua', answered: false, correct: false }
    ];
 
@@ -652,4 +652,5 @@
     updateUI();
 </script>
 </body>
+
 </html>
