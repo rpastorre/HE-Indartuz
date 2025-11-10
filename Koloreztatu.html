@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="eu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Koloreztatzeko Tresna</title>
+    <style>
+        /* Estilos base */
+        :root {
+            --sidebar-width: 280px;
+            --bg: #f5f6f7;
+            --panel: #e9e9e9;
+            --accent: #222;
+            --warning: #e41a1c;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--accent);
+        }
+
+        /* 📢 CAMBIO CLAVE 1: El contenedor principal ocupa el 100% del viewport */
+        .wrap {
+            display: flex;
+            height: 100vh; /* Ocupa toda la altura visible */
+            max-height: 100vh;
+            gap: 20px;
+            align-items: stretch; /* Estira los hijos (sidebar y svg-wrapper) a la misma altura */
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--panel);
+            padding: 18px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            /* Añadido para que no se estire más de lo necesario en altura */
+            align-self: flex-start; 
+            max-height: 100%; /* Limita la altura de la barra lateral si el contenido es grande */
+            overflow-y: auto; /* Permite scroll si es necesario */
+        }
+        
+        #langBtn {
+            padding: 8px 15px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            align-self: flex-end;
+            font-weight: bold;
+        }
+
+        /* 📢 CAMBIO CLAVE 2: El wrapper ocupa todo el espacio disponible */
+        .svg-wrapper {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: white;
+            min-width: 400px; 
+            height: 100%; /* Ocupa el 100% de la altura de .wrap */
+            max-height: 100%;
+            overflow: hidden; /* Importante para el responsive */
+            text-align: center;
+            color: #ccc;
+            font-style: italic;
+        }
+        
+        /* 📢 CAMBIO CLAVE 3: Regla para el SVG inyectado */
+        .svg-wrapper svg {
+            display: block;
+            max-width: 100%; /* Se ajusta al ancho del contenedor */
+            max-height: 100%; /* Se ajusta a la altura del contenedor */
+            width: auto; /* Permite que el navegador calcule el tamaño */
+            height: auto; /* Permite que el navegador calcule el tamaño */
+            /* preserveAspectRatio="xMidYMid meet" es el comportamiento por defecto y hace el escalado */
+        }
+
+        /* Estilos clave para los elementos que se pueden colorear */
+        .fillable {
+            cursor: pointer;
+            stroke: #000;
+            stroke-width: 1px;
+            transition: fill 0.1s ease;
+        }
+
+        .color-palette {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .color-sample {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .color-sample.selected {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px white;
+        }
+
+        #clearBtn {
+            padding: 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        /* Input de archivo */
+        .file-input-group {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 15px;
+            background-color: #fff;
+        }
+        
+        #svgFileUploader {
+            width: 100%;
+            padding: 5px 0;
+        }
+
+        /* --- Estilos para la notificación Pop-up (Toast) --- */
+        #toast-notification {
+            visibility: hidden;
+            min-width: 300px;
+            background-color: var(--warning);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1000;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 30px;
+            font-size: 17px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        #toast-notification.show {
+            visibility: visible;
+            opacity: 1;
+            animation: fadein 0.5s, fadeout 0.5s 3.0s;
+        }
+
+        @keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
+        }
+
+        @keyframes fadeout {
+            from {bottom: 30px; opacity: 1;}
+            to {bottom: 0; opacity: 0;}
+        }
+    </style>
+</head>
+<body>
+
+    <div class="wrap">
+        
+        <div class="sidebar">
+            <button id="langBtn" onclick="switchLanguage()">ES</button>
+            <h1 id="title" data-i18n="title">SVG Koloreztatzeko Tresna</h1>
+            <p id="subtitle" data-i18n="subtitle">Hautatu kolore bat eta klikatu mapako eremuetan.</p>
+            
+            <div class="file-input-group">
+                <label for="svgFileUploader" data-i18n="upload_label">Cargar archivo SVG:</label>
+                <input type="file" id="svgFileUploader" accept="image/svg+xml">
+            </div>
+
+            <div class="color-palette" id="colorPalette">
+            </div>
+
+            <button id="clearBtn" onclick="clearMap()" data-i18n="clear" disabled>Mapa Garbitu</button>
+
+            <h3 data-i18n="total_colors_header">Erabilitako Kolore Uniko Kopurua</h3>
+            <div class="color-count" id="colorCount">
+                <p style="font-size: 24px; font-weight: bold; margin: 5px 0;">0</p>
+            </div>
+        </div>
+
+        <div class="svg-wrapper" id="svgWrapper">
+             <p data-i18n="placeholder">Cargue un archivo SVG para comenzar.</p>
+        </div>
+    </div>
+    
+    <div id="toast-notification"></div>
+
+    <script>
+        // =========================================================
+        // JAVASCRIPT: LÓGICA PRINCIPAL
+        // =========================================================
+
+        let selectedColor = null;
+        let lang = 'eu'; 
+
+        const TOLERANCE_PERCENTAGE = 0.000001; 
+        let ABSOLUTE_VERTEX_TOLERANCE = 0.0; 
+        const UNFILLED_COLOR = '#ffffff'; 
+
+        const colorList = [
+            '#ffffff', '#ff7f00', '#377EB8', '#E41A1C', 
+            '#4DAF4A', '#FFFF33', '#984EA3', '#A65628'  
+        ];
+        
+        const texts = {
+            'eu': {
+                'title': "Mapak koloreztatzeko tresna",
+                'subtitle': "Hautatu kolore bat eta klikatu mapako eremuetan.",
+                'upload_label': "Kargatu SVG fitxategia:",
+                'placeholder': "Kargatu SVG fitxategia hasteko.",
+                'total_colors_header': "Erabilitako kolore kopurua",
+                'clear': "Mapa Garbitu",
+                'warning': "Ondoz ondoko eremuak bi kolore berdinarekin margotu dituzu!"
+            },
+            'es': {
+                'title': "Herramienta para colorear mapas",
+                'subtitle': "Selecciona un color y haz clic en las áreas del mapa.",
+                'upload_label': "Cargar archivo SVG:",
+                'placeholder': "Cargue un archivo SVG para comenzar.",
+                'total_colors_header': "Total de colores utilizados",
+                'clear': "Limpiar Mapa",
+                'warning': "¡Has rellenado dos recintos adyacentes con el mismo color!"
+            }
+        };
+
+        // ---------------------------------------------
+        // 1. Lógica Geométrica y Tolerancia
+        // ---------------------------------------------
+
+        function showToast(messageKey) {
+            const toast = document.getElementById('toast-notification');
+            if (!toast) return;
+
+            toast.textContent = texts[lang][messageKey]; 
+            
+            toast.classList.remove('show');
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3500);
+        }
+
+        function getGlobalPoint(element, point) {
+            if (!element.ownerSVGElement) return point;
+
+            try {
+                const svg = element.ownerSVGElement;
+                let svgPoint = svg.createSVGPoint();
+                svgPoint.x = point.x;
+                svgPoint.y = point.y;
+                
+                const matrix = element.getCTM();
+                if (matrix) {
+                    svgPoint = svgPoint.matrixTransform(matrix);
+                }
+                
+                return { x: svgPoint.x, y: svgPoint.y };
+            } catch (e) {
+                return point;
+            }
+        }
+        
+        /**
+         * Extrae los vértices principales del atributo 'd' y los convierte a coordenadas globales.
+         */
+        function extractVerticesFromPath(element) {
+            if (element.tagName.toLowerCase() !== 'path' || !element.getAttribute('d')) {
+                return [];
+            }
+
+            const d = element.getAttribute('d');
+            const commands = d.match(/[MLZmlz][^MLZmlz]*/g);
+            if (!commands) return [];
+
+            const globalPoints = [];
+            let currentX = 0;
+            let currentY = 0;
+
+            commands.forEach(command => {
+                const type = command[0];
+                const data = command.substring(1).trim().split(/[\s,]+/);
+                
+                if (type.toUpperCase() === 'Z') {
+                    return; 
+                }
+
+                for (let i = 0; i < data.length; i += 2) {
+                    if (data[i] === undefined || data[i+1] === undefined) continue;
+
+                    let x = parseFloat(data[i]);
+                    let y = parseFloat(data[i+1]);
+
+                    if (type === 'm' || type === 'l') { 
+                        x += currentX;
+                        y += currentY;
+                    }
+                    
+                    if (type.toUpperCase() === 'M' || type.toUpperCase() === 'L') {
+                        const localPoint = { x: x, y: y };
+                        const globalPoint = getGlobalPoint(element, localPoint); 
+                        globalPoints.push(globalPoint);
+                        currentX = x;
+                        currentY = y;
+                    } 
+                }
+            });
+
+            const uniquePoints = [];
+            const seen = new Set();
+            globalPoints.forEach(p => {
+                const key = `${p.x.toFixed(6)},${p.y.toFixed(6)}`; 
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    uniquePoints.push(p);
+                }
+            });
+
+            return uniquePoints;
+        }
+
+        /**
+         * Calcula la tolerancia absoluta de cercanía de vértices basada en el viewBox del SVG.
+         */
+        function calculateAbsoluteTolerance() {
+            const svgElement = document.querySelector('.svg-wrapper svg');
+            if (!svgElement) {
+                ABSOLUTE_VERTEX_TOLERANCE = 0.001; 
+                return;
+            }
+
+            const viewBox = svgElement.getAttribute('viewBox');
+            let maxExtent;
+
+            if (viewBox) {
+                const parts = viewBox.split(/\s+|,/);
+                const width = parseFloat(parts[2]);
+                const height = parseFloat(parts[3]);
+                maxExtent = Math.max(width, height);
+            } else {
+                try {
+                    const svgBBox = svgElement.getBBox();
+                    maxExtent = Math.max(svgBBox.width, svgBBox.height);
+                } catch (e) {
+                    maxExtent = 1000; 
+                }
+            }
+
+            if (isNaN(maxExtent) || maxExtent === 0) {
+                 maxExtent = 1000;
+            }
+            
+            ABSOLUTE_VERTEX_TOLERANCE = maxExtent * TOLERANCE_PERCENTAGE;
+        }
+
+
+        function pointsAreClose(p1, p2) {
+            const TOL = ABSOLUTE_VERTEX_TOLERANCE;
+            const dx = p1.x - p2.x;
+            const dy = p1.y - p2.y;
+            const distanceSq = dx * dx + dy * dy;
+            
+            return distanceSq <= (TOL * TOL);
+        }
+
+        function checkGeometricAdjacency(currentElement, newColor) {
+            const normalizedNewColor = newColor.toLowerCase();
+
+            if (normalizedNewColor === UNFILLED_COLOR) {
+                return false; 
+            }
+            
+            const currentPoints = extractVerticesFromPath(currentElement);
+            if (currentPoints.length < 2) return false;
+
+            // Busca todos los elementos con la clase .fillable
+            const allFillables = document.querySelectorAll('.fillable'); 
+
+            for (const neighborElement of allFillables) {
+                if (neighborElement === currentElement) continue; 
+
+                let neighborColor = (neighborElement.style.fill || UNFILLED_COLOR).toLowerCase();
+                
+                if (neighborColor.startsWith('rgb')) {
+                    neighborColor = rgbToHex(neighborColor).toLowerCase();
+                }
+
+                if (neighborColor === normalizedNewColor) {
+                    
+                    const neighborPoints = extractVerticesFromPath(neighborElement);
+                    let sharedPointCount = 0;
+                    
+                    const neighborUsed = new Array(neighborPoints.length).fill(false);
+
+                    for (const currPoint of currentPoints) {
+                        for (let i = 0; i < neighborPoints.length; i++) {
+                            if (!neighborUsed[i]) {
+                                const neighPoint = neighborPoints[i];
+                                
+                                if (pointsAreClose(currPoint, neighPoint)) {
+                                    sharedPointCount++;
+                                    neighborUsed[i] = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (sharedPointCount >= 2) {
+                            return true; 
+                        }
+                    }
+                }
+            }
+            
+            return false; 
+        }
+
+        // ---------------------------------------------
+        // 2. Funciones de UTILIDAD y INTERFAZ
+        // ---------------------------------------------
+        
+        function rgbToHex(rgb) {
+            const parts = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+            if (!parts) return rgb; 
+
+            function hex(x) {
+                const h = parseInt(x).toString(16);
+                return h.length === 1 ? '0' + h : h;
+            }
+
+            return '#' + hex(parts[1]) + hex(parts[2]) + hex(parts[3]);
+        }
+        
+        function updateColorCount() {
+            const usedColors = new Set();
+            
+            document.querySelectorAll('.fillable').forEach(el => {
+                let color = (el.style.fill || '').toLowerCase(); 
+                
+                if (color) {
+                    const normalizedColor = color.startsWith('rgb') ? rgbToHex(color) : color;
+                    
+                    if (normalizedColor !== UNFILLED_COLOR) {
+                         usedColors.add(normalizedColor);
+                    }
+                }
+            });
+
+            const totalUniqueColors = usedColors.size;
+            const countDiv = document.getElementById('colorCount');
+            
+            countDiv.innerHTML = `<p style="font-size: 24px; font-weight: bold; margin: 5px 0;">
+                                    ${totalUniqueColors}
+                                  </p>`;
+        }
+
+        function updateInterface() {
+            document.getElementById('langBtn').textContent = (lang === 'eu') ? 'ES' : 'EU';
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (texts[lang][key]) {
+                    if (el.tagName === 'LABEL') {
+                        el.innerHTML = texts[lang][key];
+                    } else {
+                        el.textContent = texts[lang][key];
+                    }
+                }
+            });
+            document.title = texts[lang].title;
+            updateColorCount(); 
+        }
+
+        function switchLanguage() {
+            lang = (lang === 'eu') ? 'es' : 'eu';
+            document.documentElement.lang = lang; 
+            updateInterface();
+        }
+
+        function clearMap() {
+            document.querySelectorAll('.fillable').forEach(el => {
+                el.style.fill = UNFILLED_COLOR;
+            });
+            updateColorCount();
+        }
+        
+        function handleElementClick(e) {
+            const element = e.currentTarget;
+            
+            if (!selectedColor) return;
+            
+            const illegalAdjacency = checkGeometricAdjacency(element, selectedColor);
+            
+            if (illegalAdjacency) {
+                showToast('warning');
+            } else {
+                element.style.fill = selectedColor;
+            }
+            
+            updateColorCount();
+        }
+
+        // ---------------------------------------------
+        // 3. Carga y Inicialización de SVG (Corregido)
+        // ---------------------------------------------
+        
+        /**
+         * Selecciona los elementos rellenables, los inicializa y adjunta eventos.
+         */
+        function initFillables() {
+            
+            const svgElement = document.getElementById('svgWrapper').querySelector('svg');
+            
+            if (!svgElement) {
+                document.getElementById('clearBtn').disabled = true;
+                updateColorCount();
+                return;
+            }
+            
+            const elementsToColor = svgElement.querySelectorAll('path, polygon, rect, circle, ellipse');
+            
+            if (elementsToColor.length === 0) {
+                 document.getElementById('clearBtn').disabled = true;
+                 return;
+            }
+
+            elementsToColor.forEach(el => {
+                el.classList.add('fillable'); 
+                
+                el.removeAttribute('fill');
+                el.style.removeProperty('fill');
+
+                el.style.fill = UNFILLED_COLOR; 
+                
+                if (el.style.stroke === '' || el.style.stroke === 'none') {
+                    el.style.stroke = '#000000';
+                }
+                if (el.style.strokeWidth === '') {
+                    el.style.strokeWidth = '1px';
+                }
+
+                if (!el.hasAttribute('data-listener-added')) {
+                    el.setAttribute('data-listener-added', 'true');
+                    el.addEventListener('click', handleElementClick);
+                }
+            });
+            
+            calculateAbsoluteTolerance(); 
+            document.getElementById('clearBtn').disabled = false; 
+            updateColorCount(); 
+        }
+        
+        /**
+         * Maneja la selección del archivo SVG, lee su contenido y lo inyecta.
+         */
+        function handleSVGFileLoad(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const svgContent = e.target.result;
+                const svgWrapper = document.getElementById('svgWrapper');
+                
+                // Limpiar contenido anterior e inyectar el nuevo SVG
+                svgWrapper.innerHTML = svgContent;
+                
+                const svgElement = svgWrapper.querySelector('svg');
+                
+                // 📢 CAMBIO CLAVE 4: Eliminar atributos de tamaño fijos
+                if (svgElement) {
+                    svgElement.removeAttribute('width');
+                    svgElement.removeAttribute('height');
+                    // El CSS ahora maneja el escalado de forma responsiva
+                }
+                
+                // Iniciar la lógica de coloreado en los nuevos elementos
+                initFillables();
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // ---------------------------------------------
+        // 4. Inicialización de la Interfaz
+        // ---------------------------------------------
+
+        function setupColorPalette() {
+            const palette = document.getElementById('colorPalette');
+            if (!palette) return;
+            
+            palette.innerHTML = ''; 
+
+            colorList.forEach(color => {
+                const sample = document.createElement('div');
+                sample.className = 'color-sample';
+                sample.style.backgroundColor = color;
+                
+                if (color === UNFILLED_COLOR) {
+                     sample.classList.add('selected');
+                     selectedColor = color;
+                }
+
+                sample.addEventListener('click', () => {
+                    selectedColor = color;
+                    document.querySelectorAll('.color-sample').forEach(s => s.classList.remove('selected'));
+                    sample.classList.add('selected');
+                });
+                palette.appendChild(sample);
+            });
+        }
+
+        // Ejecución al cargar la página
+        window.addEventListener('load', () => {
+            setupColorPalette();
+            updateInterface(); 
+            
+            // Adjuntar listener al input de archivo
+            document.getElementById('svgFileUploader').addEventListener('change', handleSVGFileLoad);
+        });
+    </script>
+</body>
+</html>
