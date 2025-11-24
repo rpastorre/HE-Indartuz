@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="eu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">Simulación de Lotka-Volterra</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; user-select: none; }
+        .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; margin-top: 0; }
+        .main-layout {
+            display: flex;
+            gap: 0; 
+            height: 70vh; 
+        }
+        .left-controls {
+            width: 300px; 
+            min-width: 250px; 
+            max-width: 50%; 
+            overflow-y: auto; 
+            padding-right: 10px;
+        }
+        #splitter {
+            width: 5px;
+            cursor: col-resize;
+            background-color: #ccc;
+            margin: 0 5px;
+            flex-shrink: 0;
+        }
+        #splitter:hover {
+            background-color: #999;
+        }
+        .right-charts {
+            flex: 1; 
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-width: 400px;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9ff;
+        }
+        .control-group label { display: block; margin-bottom: 3px; font-weight: bold; font-size: 0.9em; }
+        .control-group input[type="number"] { width: 95%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .button-group { 
+            display: flex; 
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        #runButton { 
+            flex-grow: 1; 
+            padding: 10px 15px; 
+            background-color: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 1em; 
+            transition: background-color 0.3s; 
+        }
+        #runButton:hover { background-color: #0056b3; }
+        #lang-switch-button { 
+            width: 50px; 
+            padding: 10px 0; 
+            background-color: #3498db; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 1em; 
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+        #lang-switch-button:hover { background-color: #2980b9; }
+        .chart-container {
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            padding: 10px;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            flex: 1; 
+        }
+        #top-header-container { text-align: right; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="top-header-container"></div>
+        
+        <h1 id="mainTitle">🐈 Kivu Uhartea 🐇</h1> 
+
+        <div class="main-layout" id="mainLayout">
+            <div class="left-controls" id="leftControls">
+                <div class="controls">
+                    
+                    <div class="button-group">
+                        <button id="runButton" onclick="runSimulation()">Simulazioa Exekutatu</button>
+                        <button id="lang-switch-button" onclick="toggleLanguage()">ES</button>
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px solid #ccc; margin: 15px 0;">
+
+                    <div class="control-group"><label id="labelT" for="T">T (Simulazio Denboraldiak):</label><input type="number" id="T" value="200" min="10"></div>
+                    
+                    <hr style="border: 0; border-top: 1px solid #ccc; margin: 15px 0;">
+                    
+                    <div class="control-group"><label id="labelX0" for="X0">x₀ (Hasierako Untxiak):</label><input type="number" id="X0" value="100" min="1"></div>
+                    <div class="control-group"><label id="labelY0" for="Y0">y₀ (Hasierako Katamotzak):</label><input type="number" id="Y0" value="40" min="1"></div>
+                    
+                    <hr style="border: 0; border-top: 1px solid #ccc; margin: 15px 0;">
+                    
+                    <div class="control-group"><label id="labelA" for="A"></label><input type="number" id="A" value="0.10" min="0" step="0.01"></div>
+                    <div class="control-group"><label id="labelM" for="M"></label><input type="number" id="M" value="0.05" min="0" step="0.01"></div>
+                    <div class="control-group"><label id="labelF" for="F"></label><input type="number" id="F" value="0.001" min="0" step="0.001"></div>
+                    <div class="control-group"><label id="labelE" for="E"></label><input type="number" id="E" value="0.5" min="0" step="0.01"></div>
+                    
+                </div>
+            </div>
+            
+            <div id="splitter"></div>
+
+            <div class="right-charts">
+                <div class="chart-container">
+                    <canvas id="timeSeriesChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="phasePlotChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Textos para la interfaz (translations) ---
+        const translations = {
+            eu: {
+                title: "Kivu Uhartea",
+                mainTitle: "🐈 Kivu Uhartea 🐇",
+                button: "Simulazioa Exekutatu",
+                switchButton: "ES", 
+                labelT: "T (Simulazio Denboraldiak):",
+                labelX0: "x₀ (Hasierako Untxiak):",
+                labelY0: "y₀ (Hasierako Katamotzak):",
+                // NUEVAS LETRAS
+                labelA: "a (Untxien Hazkuntza Tasa):",
+                labelM: "m (Katamotzen Heriotza Tasa):",
+                labelF: "f (Harrapaketaren Tasa):",
+                labelE: "e (Bihurketa Eraginkortasuna):",
+                // GRÁFICOS
+                tsChartTitle: "Populazioen Bilakaera",
+                tsXAxis: "Denbora",
+                tsYAxis: "Populazioa",
+                tsLabelPrey: "Untxiak (x)",
+                tsLabelPredator: "Katamotzak (y)",
+                ppChartTitle: "Harrapari / Harrapakin Zikloa",
+                ppXAxis: "Untxi Populazioa (x)",
+                ppYAxis: "Katamotz Populazioa (y)",
+                ppEquilibrium: "Oreka-puntua"
+            },
+            es: {
+                title: "Isla Kivu",
+                mainTitle: "🐈 Isla Kivu 🐇",
+                button: "Ejecutar Simulación",
+                switchButton: "EU", 
+                labelT: "T (Épocas de Simulación):",
+                labelX0: "x₀ (Población Inicial Conejos):",
+                labelY0: "y₀ (Población Inicial Linces):",
+                // NUEVAS LETRAS
+                labelA: "a (Tasa Crecimiento Conejos):",
+                labelM: "m (Tasa Mortalidad Linces):",
+                labelF: "f (Tasa de Caza):",
+                labelE: "e (Eficiencia de Conversión):",
+                // GRÁFICOS
+                tsChartTitle: "Evolución de Poblaciones",
+                tsXAxis: "Tiempo",
+                tsYAxis: "Población",
+                tsLabelPrey: "Conejos (x)",
+                tsLabelPredator: "Linces (y)",
+                ppChartTitle: "Ciclo Depredador / Presa",
+                ppXAxis: "Población de Conejos (x)",
+                ppYAxis: "Población de Linces (y)",
+                ppEquilibrium: "Punto de Equilibrio"
+            }
+        };
+
+        let currentLang = 'eu';
+        
+        let timeSeriesChart;
+        let phasePlotChart;
+        
+        const ctxTimeSeries = document.getElementById('timeSeriesChart').getContext('2d');
+        const ctxPhasePlot = document.getElementById('phasePlotChart').getContext('2d');
+        
+        // --- Lógica del Separador (Splitter Logic) ---
+        const splitter = document.getElementById('splitter');
+        const leftControls = document.getElementById('leftControls');
+        const mainLayout = document.getElementById('mainLayout');
+        let isResizing = false;
+
+        splitter.addEventListener('mousedown', function(e) {
+            isResizing = true;
+            document.body.style.cursor = 'col-resize';
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        });
+
+        function handleMouseMove(e) {
+            if (!isResizing) return;
+            const containerRect = mainLayout.getBoundingClientRect();
+            let newWidth = e.clientX - containerRect.left;
+            
+            const minWidth = 250; 
+            const maxWidth = containerRect.width * 0.7; 
+            
+            if (newWidth >= minWidth && newWidth <= maxWidth) {
+                leftControls.style.width = newWidth + 'px';
+                
+                if (timeSeriesChart) timeSeriesChart.resize();
+                if (phasePlotChart) phasePlotChart.resize();
+            }
+        }
+
+        function handleMouseUp() {
+            isResizing = false;
+            document.body.style.cursor = 'default';
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        }
+
+        // --- Funciones de Interfaz de Usuario (UI) ---
+
+        function updateUI() {
+            const lang = translations[currentLang];
+            document.getElementById('pageTitle').textContent = lang.title;
+            document.getElementById('mainTitle').innerHTML = lang.mainTitle; 
+            document.getElementById('runButton').textContent = lang.button;
+            
+            const switchButton = document.getElementById('lang-switch-button');
+            switchButton.textContent = lang.switchButton;
+
+            document.getElementById('labelT').textContent = lang.labelT;
+            document.getElementById('labelX0').textContent = lang.labelX0;
+            document.getElementById('labelY0').textContent = lang.labelY0;
+            
+            // VARIABLES MODIFICADAS
+            document.getElementById('labelA').textContent = lang.labelA;
+            document.getElementById('labelM').textContent = lang.labelM;
+            document.getElementById('labelF').textContent = lang.labelF;
+            document.getElementById('labelE').textContent = lang.labelE;
+            
+            if (timeSeriesChart) { updateTimeSeriesChartLabels(lang); }
+            
+            // Nota: La leyenda del punto de equilibrio se actualiza completamente en runSimulation.
+            if (phasePlotChart) { updatePhasePlotChartLabels(lang); }
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'es' ? 'eu' : 'es';
+            document.documentElement.lang = currentLang;
+            updateUI();
+        }
+
+        function runSimulation() {
+            const T = parseInt(document.getElementById('T').value);
+            const dt = 1; 
+            
+            let X_prey = parseFloat(document.getElementById('X0').value); 
+            let Y_predator = parseFloat(document.getElementById('Y0').value); 
+            
+            // --- CONSTANTES (NUEVAS LETRAS) ---
+            const A = parseFloat(document.getElementById('A').value); // Tasa de Crecimiento Conejos (R)
+            const M = parseFloat(document.getElementById('M').value); // Tasa de Mortalidad Linces (D)
+            const F = parseFloat(document.getElementById('F').value); // Tasa de Caza (F)
+            const E = parseFloat(document.getElementById('E').value); // Eficiencia (E)
+
+            const e_f = E * F; 
+
+            const timePoints = [];
+            const preyData = [];
+            const predatorData = [];
+            const phasePlotData = []; 
+
+            // --- CÁLCULO DEL PUNTO DE EQUILIBRIO (x*, y*) ---
+            // x* = m / (e * f)
+            // y* = a / f
+            let xStar = 0;
+            let yStar = 0;
+            
+            if (e_f !== 0) xStar = M / e_f;
+            if (F !== 0) yStar = A / F;
+
+            // Formatear los valores para la leyenda (redondeo a 2 decimales)
+            const xStarFormatted = xStar.toFixed(2);
+            const yStarFormatted = yStar.toFixed(2);
+
+            for (let t = 0; t < T; t++) {
+                timePoints.push(t * dt);
+                preyData.push(X_prey);
+                predatorData.push(Y_predator);
+                
+                phasePlotData.push({ x: X_prey, y: Y_predator }); 
+
+                // --- ECUACIONES CON NUEVAS VARIABLES ---
+                // dX/dt = a * X - f * X * Y
+                const dX_prey_dt = (A * X_prey) - (F * X_prey * Y_predator);
+                
+                // dY/dt = e * f * X * Y - m * Y
+                const dY_predator_dt = (e_f * X_prey * Y_predator) - (M * Y_predator);
+
+                X_prey = X_prey + (dt * dX_prey_dt);
+                Y_predator = Y_predator + (dt * dY_predator_dt);
+                
+                if (X_prey < 1) X_prey = 0;
+                if (Y_predator < 1) Y_predator = 0;
+            }
+
+            updateTimeSeriesChart(timePoints, preyData, predatorData);
+            // Pasamos el punto de equilibrio y los valores formateados
+            updatePhasePlotChart(phasePlotData, xStar, yStar, xStarFormatted, yStarFormatted);
+        }
+        
+        // --- Funciones de Gráficos ---
+        function updateTimeSeriesChartLabels(lang) {
+            if (timeSeriesChart) {
+                timeSeriesChart.data.datasets[0].label = lang.tsLabelPrey;
+                timeSeriesChart.data.datasets[1].label = lang.tsLabelPredator;
+                timeSeriesChart.options.plugins.title.text = lang.tsChartTitle;
+                timeSeriesChart.options.scales.x.title.text = lang.tsXAxis;
+                timeSeriesChart.options.scales.y.title.text = lang.tsYAxis;
+                timeSeriesChart.update();
+            }
+        }
+        function updateTimeSeriesChart(timePoints, preyData, predatorData) {
+            const lang = translations[currentLang];
+            if (timeSeriesChart) { timeSeriesChart.destroy(); }
+            timeSeriesChart = new Chart(ctxTimeSeries, {
+                type: 'line', data: { labels: timePoints, datasets: [{ label: lang.tsLabelPrey, data: preyData, borderColor: 'rgb(75, 192, 192)', backgroundColor: 'rgba(75, 192, 192, 0.5)', tension: 0.1, pointRadius: 0, borderWidth: 3 }, { label: lang.tsLabelPredator, data: predatorData, borderColor: 'rgb(255, 99, 132)', backgroundColor: 'rgba(255, 99, 132, 0.5)', tension: 0.1, pointRadius: 0, borderWidth: 3 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: lang.tsXAxis } }, y: { title: { display: true, text: lang.tsYAxis }, beginAtZero: true } }, plugins: { legend: { display: true }, title: { display: true, text: lang.tsChartTitle } } }
+            });
+        }
+        
+        function updatePhasePlotChartLabels(lang) {
+             if (phasePlotChart) {
+                phasePlotChart.options.plugins.title.text = lang.ppChartTitle;
+                phasePlotChart.options.scales.x.title.text = lang.ppXAxis;
+                phasePlotChart.options.scales.y.title.text = lang.ppYAxis;
+                phasePlotChart.update();
+            }
+        }
+        
+        function updatePhasePlotChart(phasePlotData, xStar, yStar, xStarFormatted, yStarFormatted) {
+            const lang = translations[currentLang];
+            if (phasePlotChart) { phasePlotChart.destroy(); }
+            
+            // Construir la etiqueta dinámica con los valores de equilibrio
+            const equilibriumLabel = `${lang.ppEquilibrium} (x* = ${xStarFormatted}, y* = ${yStarFormatted})`;
+
+            phasePlotChart = new Chart(ctxPhasePlot, {
+                type: 'scatter', 
+                data: { 
+                    datasets: [
+                        { 
+                            type: 'line',
+                            label: lang.ppEquilibrium.includes('Oreka') ? 'Harrapari/Harrapakin Zikloa' : 'Ciclo Predador/Presa', 
+                            data: phasePlotData, 
+                            borderColor: 'rgb(54, 162, 235)', 
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)', 
+                            borderWidth: 3, 
+                            pointRadius: 0, 
+                            showLine: true, 
+                            fill: false 
+                        },
+                        {
+                            type: 'scatter',
+                            label: equilibriumLabel, // Usa la etiqueta dinámica
+                            data: [{x: xStar, y: yStar}],
+                            borderColor: 'red',
+                            backgroundColor: 'red',
+                            pointRadius: 6, 
+                            pointHoverRadius: 8
+                        }
+                    ] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { 
+                        x: { type: 'linear', position: 'bottom', title: { display: true, text: lang.ppXAxis }, beginAtZero: true }, 
+                        y: { type: 'linear', position: 'left', title: { display: true, text: lang.ppYAxis }, beginAtZero: true } 
+                    }, 
+                    plugins: { 
+                        legend: { display: true }, 
+                        title: { display: true, text: lang.ppChartTitle } 
+                    } 
+                }
+            });
+        }
+        
+        window.onload = () => {
+            updateUI();
+            runSimulation(); 
+        };
+    </script>
+
+</body>
+</html>
