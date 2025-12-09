@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="eu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="title">Hanoiko Dorreak</title>
+    <style>
+        /* Estilo orokorra */
+        body { 
+            font-family: Arial, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            margin-top: 20px; 
+            background-color: #f4f4f4; 
+        }
+        .controls { 
+            margin-bottom: 20px; 
+            padding: 15px; 
+            border: 1px solid #ccc; 
+            background-color: #fff; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
+        }
+        .stats { 
+            margin-top: 20px; 
+            font-size: 1.2em; 
+        }
+        
+        /* Contenedor del juego */
+        .game-container { 
+            display: flex; 
+            justify-content: center; 
+            gap: 20px; 
+            width: 80vw; 
+            max-width: 900px; 
+            padding: 20px; 
+            border: 2px solid #333; 
+            background-color: #eee; 
+            border-radius: 8px; 
+        }
+        
+        /* Dorrea eta Postea (ALDAKETA NAGUSIA) */
+        .tower { 
+            flex-basis: 30%; 
+            height: 300px; 
+            display: flex; 
+            /* **FLEX DIRECTION ALDERANTZIZ** (ZUZENKETA) */
+            flex-direction: column-reverse; 
+            align-items: center; 
+            justify-content: flex-start; /* Elementuak gora begira pilatu */
+            position: relative; 
+            border-bottom: 5px solid #333; 
+            cursor: pointer; 
+            padding-bottom: 5px; 
+        }
+        
+        /* Postea (z-index 1) */
+        .tower:before { 
+            content: ''; 
+            position: absolute; 
+            bottom: 0;
+            width: 5px; 
+            height: 100%; 
+            background-color: #555; 
+            z-index: 1; 
+        }
+        
+        /* Diskoak (z-index 2) */
+        .disc { 
+            height: 20px; 
+            margin-bottom: 0px; 
+            border: 1px solid #000; 
+            border-radius: 4px; 
+            z-index: 2; 
+            position: relative;
+            box-sizing: border-box; 
+            transition: transform 0.2s; 
+        }
+        
+        .disc.selected { 
+            border: 2px dashed #FFD700; 
+            transform: translateY(-10px); 
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+        }
+        
+        /* Estiloak eta mezuak */
+        #moves-counter { font-weight: bold; padding: 5px; border-radius: 4px; transition: color 0.3s; }
+        .green { color: green; }
+        .red { color: red; }
+        #message { margin-top: 20px; font-size: 1.5em; font-weight: bold; color: navy; }
+        .language-toggle { position: absolute; top: 10px; right: 10px; padding: 8px 12px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; }
+        input[type="number"] { padding: 5px; width: 60px; }
+        button { padding: 8px 15px; cursor: pointer; background-color: #009688; color: white; border: none; border-radius: 4px; margin-left: 10px; }
+    </style>
+</head>
+<body>
+
+    <button id="lang-toggle" class="language-toggle">Cambio a Español</button>
+
+    <div class="controls">
+        <label id="input-label" for="num-discs">Disko Kopurua (3-10):</label>
+        <input type="number" id="num-discs" value="3" min="3" max="10">
+        <button id="start-button" onclick="startGame()">Hasi Jokoa</button>
+    </div>
+
+    <div class="stats">
+        <span id="moves-label">Mugimenduak:</span> <span id="moves-counter">0</span>
+        <br>
+        <span id="minimum-label">Minimoa:</span> <span id="min-moves">0</span>
+    </div>
+
+    <div id="game-container" class="game-container">
+        </div>
+    
+    <div id="message"></div>
+
+    <script>
+        // --- DISKOEN KOLOREAK (Kontraste handia) ---
+        const DISC_COLORS = [
+            '#00CED1', // Cyan (Txikiena, 1)
+            '#FFA500', // Orange (2)
+            '#32CD32', // Lime Green (3)
+            '#FF69B4', // Hot Pink (4)
+            '#6A5ACD', // Slate Blue (5)
+            '#DC143C', // Crimson (6)
+            '#1E90FF', // DodgerBlue (7)
+            '#F0E68C', // Khaki (8)
+            '#8B008B', // Dark Magenta (9)
+            '#B8860B'  // Dark Goldenrod (Handiena, 10)
+        ];
+
+        // --- HIZKUNTZA KATEAK ---
+        const LANG = {
+            eu: {
+                title: "Hanoiko Dorreak",
+                lang_button: "Cambio a Español",
+                input_label: "Disko Kopurua (3-10):",
+                start_button: "Hasi Jokoa",
+                moves_label: "Mugimenduak:",
+                minimum_label: "Minimoa:",
+                win_message: "ZORIONAK! Amaitu duzu!",
+                grade_perfect: "KALIFIKAZIOA: Bikaina! Minimala lortu duzu!",
+                grade_good: "KALIFIKAZIOA: Oso Ona. Ez da erraza!",
+                grade_fair: "KALIFIKAZIOA: Justua. Zuzena izan zara.",
+                grade_poor: "KALIFIKAZIOA: Hobetzekoa. Entrenatu gehiago!",
+                grade_ratio: "Zure erlazioa:",
+                rule_violation: "Ezin da disko handiago bat txikiago baten gainean jarri!",
+                game_ready: "Hasi Jokoa, mesedez."
+            },
+            es: {
+                title: "Torres de Hanói",
+                lang_button: "Aldatu Euskarara",
+                input_label: "Número de Discos (3-10):",
+                start_button: "Iniciar Juego",
+                moves_label: "Movimientos:",
+                minimum_label: "Mínimo:",
+                win_message: "¡ENHORABUENA! ¡Has Terminado!",
+                grade_perfect: "CALIFICACIÓN: ¡Excelente! ¡Lograste el mínimo!",
+                grade_good: "CALIFICACIÓN: Muy Buena. ¡No es fácil!",
+                grade_fair: "CALIFICACIÓN: Aceptable. Has sido correcto.",
+                grade_poor: "CALIFICACIÓN: Mejorable. ¡Entrena más!",
+                grade_ratio: "Tu relación:",
+                rule_violation: "¡No se puede poner un disco más grande sobre uno más pequeño!",
+                game_ready: "Por favor, Inicia el Juego."
+            }
+        };
+
+        let currentLang = 'eu';
+        let numDiscs = 3;
+        let minMoves = 0;
+        let currentMoves = 0;
+        let selectedTower = null;
+        let towerState = [[], [], []];
+
+        // --- DOM ELEMENTUAK ---
+        const titleEl = document.getElementById('title');
+        const langButton = document.getElementById('lang-toggle');
+        const inputLabel = document.getElementById('input-label');
+        const startButton = document.getElementById('start-button');
+        const movesLabel = document.getElementById('moves-label');
+        const minimumLabel = document.getElementById('minimum-label');
+        const movesCounter = document.getElementById('moves-counter');
+        const minMovesEl = document.getElementById('min-moves');
+        const gameContainer = document.getElementById('game-container');
+        const messageEl = document.getElementById('message');
+        const numDiscsInput = document.getElementById('num-discs');
+
+        // --- HIZKUNTZA LOGIKA ---
+        function updateUI() {
+            const strings = LANG[currentLang];
+            titleEl.textContent = strings.title;
+            langButton.textContent = strings.lang_button;
+            inputLabel.textContent = strings.input_label;
+            startButton.textContent = strings.start_button;
+            movesLabel.textContent = strings.moves_label;
+            minimumLabel.textContent = strings.minimum_label;
+            movesCounter.textContent = currentMoves;
+            minMovesEl.textContent = minMoves;
+            messageEl.textContent = strings.game_ready;
+        }
+
+        langButton.addEventListener('click', () => {
+            currentLang = currentLang === 'eu' ? 'es' : 'eu';
+            updateUI();
+        });
+
+        // --- JOKOAREN LOGIKA ---
+
+        function startGame() {
+            numDiscs = parseInt(numDiscsInput.value);
+            if (numDiscs < 3 || numDiscs > 10) numDiscs = 3; 
+
+            minMoves = Math.pow(2, numDiscs) - 1;
+            currentMoves = 0;
+            
+            // PILA HASIERATZEA: [N, N-1, ..., 1]. 
+            // Disko Handiena (N) dago array-aren hasieran, baina array-a alderantziz irakurtzen da, beraz, behar bezala funtzionatuko du.
+            towerState = [
+                Array.from({ length: numDiscs }, (_, i) => numDiscs - i), 
+                [],
+                []
+            ];
+            
+            minMovesEl.textContent = minMoves;
+            messageEl.textContent = '';
+            
+            renderGame();
+            updateStats();
+        }
+
+        function renderGame() {
+            gameContainer.innerHTML = '';
+            
+            for (let i = 0; i < 3; i++) {
+                const towerEl = document.createElement('div');
+                towerEl.classList.add('tower');
+                towerEl.dataset.towerIndex = i;
+                towerEl.addEventListener('click', () => handleTowerClick(i));
+                
+                // DISKOAK SORTU
+                towerState[i].forEach(discSize => {
+                    const discEl = document.createElement('div');
+                    discEl.classList.add('disc');
+                    
+                    // Zabalera kalkulatua (Diferentzia mantenduz)
+                    discEl.style.width = `${discSize * 25 + 50}px`; 
+                    
+                    // Kolorea esleitu (indexa discSize - 1)
+                    discEl.style.backgroundColor = DISC_COLORS[discSize - 1]; 
+                    
+                    discEl.dataset.size = discSize;
+                    towerEl.appendChild(discEl);
+                });
+
+                gameContainer.appendChild(towerEl);
+            }
+        }
+
+        function handleTowerClick(targetTowerIndex) {
+            const strings = LANG[currentLang];
+            const targetTowerEl = gameContainer.children[targetTowerIndex];
+
+            if (selectedTower === null) {
+                // 1. DISKOA AUKERATU
+                if (towerState[targetTowerIndex].length > 0) {
+                    selectedTower = targetTowerIndex;
+                    // Goiko diskoa markatu
+                    targetTowerEl.lastChild.classList.add('selected');
+                    messageEl.textContent = ''; 
+                }
+            } else {
+                // 2. DISKOA MUGITU
+                const sourceTowerIndex = selectedTower;
+                const sourceTowerEl = gameContainer.children[sourceTowerIndex];
+                
+                // Pop() bidez ateratzen den diskoa txikiena (goikoa) da beti
+                const discToMove = towerState[sourceTowerIndex][towerState[sourceTowerIndex].length - 1];
+                const topDiscOnTarget = towerState[targetTowerIndex][towerState[targetTowerIndex].length - 1];
+
+                // ARAU ERREBISA: Handiagoa ezin da txikiagoaren gainean jarri
+                if (!topDiscOnTarget || discToMove < topDiscOnTarget) {
+                    
+                    // Mugimendua exekutatu
+                    towerState[sourceTowerIndex].pop();
+                    towerState[targetTowerIndex].push(discToMove);
+                    currentMoves++;
+                    
+                    // Interfazea eguneratu
+                    renderGame();
+                    updateStats();
+                    checkWinCondition();
+
+                } else {
+                    // Arau urraketa
+                    messageEl.textContent = strings.rule_violation;
+                    messageEl.style.color = 'red';
+                    
+                    // Hautaketa desegin
+                    sourceTowerEl.lastChild.classList.remove('selected');
+                }
+
+                // Hautaketa berrezarri
+                selectedTower = null;
+                setTimeout(() => { if (messageEl.style.color === 'red') { messageEl.textContent = ''; messageEl.style.color = 'navy'; } }, 2000);
+            }
+        }
+
+        function updateStats() {
+            movesCounter.textContent = currentMoves;
+            
+            // Kolore-kodeketa
+            if (currentMoves <= minMoves) {
+                movesCounter.className = 'green';
+            } else {
+                movesCounter.className = 'red';
+            }
+        }
+
+        function checkWinCondition() {
+            // Irabazteko baldintza: disko guztiak 1. edo 2. zutabean daude
+            if (towerState[1].length === numDiscs || towerState[2].length === numDiscs) {
+                
+                const strings = LANG[currentLang];
+                
+                // Kalifikazioa kalkulatu
+                const scoreRatio = currentMoves / minMoves;
+                let gradeMessage = strings.grade_poor;
+
+                if (scoreRatio === 1) {
+                    gradeMessage = strings.grade_perfect;
+                } else if (scoreRatio <= 1.25) {
+                    gradeMessage = strings.grade_good;
+                } else if (scoreRatio <= 1.5) {
+                    gradeMessage = strings.grade_fair;
+                }
+                
+                messageEl.textContent = `${strings.win_message} (${strings.grade_ratio} ${scoreRatio.toFixed(2)}) - ${gradeMessage}`;
+                messageEl.style.color = 'green';
+                
+                // Dorreen klikak desgaitu irabazi ondoren
+                document.querySelectorAll('.tower').forEach(t => t.removeEventListener('click', handleTowerClick));
+            }
+        }
+
+        // --- HASIERAKO EXEKUZIOA ---
+        updateUI();
+        startGame(); 
+
+    </script>
+</body>
+</html>
