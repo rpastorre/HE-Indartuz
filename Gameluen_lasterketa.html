@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="eu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="game-title">Gameluen lasterketa</title>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        #game-title-header {
+            margin: 0;
+            font-size: 1.8em;
+        }
+
+        /* --- Botón de Idioma --- */
+        .lang-toggle-button {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: white;
+            color: #007bff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        /* --- Controles de Setup (Nuevos) --- */
+        #setup-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .setup-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+
+        .setup-group input {
+            padding: 8px;
+            width: 50px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+
+        /* --- Pestañas --- */
+        .tabs-header {
+            display: flex;
+            /* Ajuste para 3 botones */
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            flex-grow: 1; 
+            padding: 12px 20px;
+            border: none;
+            background-color: #ddd;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s;
+            max-width: 400px;
+        }
+
+        .tab-button.active {
+            background-color: #5d9cec;
+            color: white;
+            border-bottom: 3px solid #3c7fd6;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: white;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* --- Controles de Carrera --- */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .controls button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            flex-grow: 1;
+            transition: background-color 0.3s;
+        }
+
+        .roll-button {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .roll-button:hover:not(:disabled) {
+            background-color: #1e7e34;
+        }
+
+        .check-button {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        .check-button:hover:not(:disabled) {
+            background-color: #e0a800;
+        }
+
+        .controls button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .instructions-button {
+            background-color: #ff9800;
+            color: white; 
+            flex-grow: 0;
+            width: 40px;
+            font-size: 1.2em; 
+        }
+
+        /* --- Diseño de Jugadores y Tablas --- */
+        .players-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .player-panel {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .player-name-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* --- Área de Dados (3D) --- */
+        .dice-area-single, .dice-area-double {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 15px;
+            height: 60px;
+        }
+
+        .dice-animation {
+            width: 40px;
+            height: 40px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s ease-out;
+            margin: 0 5px;
+        }
+
+        .dice-number {
+            background-color: #ff5722;
+            color: white;
+        }
+
+        .dice-operator {
+            background-color: #00BCD4;
+            color: white;
+        }
+
+        .dice-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background-color: inherit;
+            color: inherit;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Transformaciones 3D iniciales */
+        .face-front { transform: rotateY(0deg) translateZ(20px); }
+        .face-back { transform: rotateY(180deg) translateZ(20px); }
+        .face-right { transform: rotateY(90deg) translateZ(20px); }
+        .face-left { transform: rotateY(-90deg) translateZ(20px); }
+        .face-top { transform: rotateX(90deg) translateZ(20px); }
+        .face-bottom { transform: rotateX(-90deg) translateZ(20px); }
+
+        /* Animación de rodado (rolling) */
+        .dice-animation.rolling {
+            animation: roll 1s infinite cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes roll {
+            0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+            100% { transform: rotateX(720deg) rotateY(360deg) rotateZ(360deg); }
+        }
+
+        /* Posición final (stopped-3d) - se establece en JS */
+        .dice-animation.stopped-3d {
+            animation: none;
+        }
+
+        .dice-face.final-result {
+            background-color: rgba(255, 255, 255, 0.2);
+            box-shadow: none;
+            color: inherit;
+        }
+
+
+        /* --- Tablas de Resultados --- */
+        .player-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .player-table th, .player-table td {
+            border: 1px solid #ddd;
+            padding: 5px;
+            text-align: center;
+        }
+
+        .player-table th {
+            background-color: #eee;
+            font-weight: bold;
+        }
+
+        .pos-cell {
+            font-weight: bold;
+            background-color: #e6f7ff;
+        }
+
+        .res-input {
+            width: 80%;
+            padding: 3px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            text-align: center;
+        }
+
+        .era-select {
+            width: 100%;
+            padding: 3px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            text-align: center;
+        }
+
+        /* Estados de respuesta con colores más vivos */
+        .res-input.correct-answer {
+            background-color: #81c784;
+            border-color: #4caf50;
+        }
+
+        .res-input.incorrect-answer {
+            background-color: #e57373;
+            border-color: #f44336;
+        }
+
+        /* --- Pista de Carreras (Recta Numérica) --- */
+        .race-track-container {
+            margin-top: 30px;
+            padding: 0 10px;
+            position: relative;
+        }
+
+        /* CONTENEDOR DE PISTAS INDIVIDUALES */
+        .race-track {
+            width: 96%;
+            background-color: transparent; 
+            margin: 30px auto 40px auto;
+            position: relative;
+            padding: 10px 0; 
+            display: flex;
+            flex-direction: column;
+            gap: 5px; /* SEPARACIÓN DE 5PX ENTRE PISTAS */
+            border-radius: 0;
+        }
+
+        /* PISTA INDIVIDUAL */
+        .individual-track {
+            position: relative;
+            width: 100%;
+            height: 3px; /* Altura de la línea */
+            background-color: #888; /* Color gris medio */
+            border-radius: 2px;
+        }
+
+        /* OCULTAR ETIQUETAS START/END */
+        .track-label {
+            display: none; 
+        }
+
+        /* 🐪 ESTILO DEL CAMELO (racer-marker) 🐪 */
+        .racer-marker {
+            position: absolute;
+            width: 40px; 
+            height: 40px; 
+            
+            background-color: transparent; 
+            border-radius: 0; 
+            border: none;
+            box-shadow: none; 
+            
+            display: block;
+            /* CAMBIO: Sube 5px adicionales (total -15px desde el centro) */
+            top: calc(50% - 15px); 
+            transform: translate(-50%, -50%); 
+            
+            /* MODIFICADO: Aumentar la duración de la transición a n segundos */
+            transition: left 1s ease-out, transform 0.3s;
+            
+            cursor: default;
+            z-index: 5; 
+        }
+
+        /* El icono/emoji del camello */
+        .racer-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            
+            /* Voltear horizontalmente para que mire a la derecha */
+            transform: translate(-50%, -50%) scaleX(-1); 
+            
+            font-size: 2.2em; 
+            line-height: 1; 
+            z-index: 6;
+        }
+
+        /* Ajustar la posición de .racer-number para que esté sobre el camello */
+        .racer-number {
+            position: absolute;
+            top: -10px; 
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8em;
+            padding: 1px 4px;
+            border-radius: 50%;
+            background-color: rgba(255, 152, 0, 0.9);
+            color: white;
+            z-index: 11; 
+        }
+
+
+        .racer-name {
+            position: absolute;
+            bottom: -25px;
+            white-space: nowrap;
+            font-size: 0.75em;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 2px 5px;
+            border-radius: 3px;
+            transform: translateX(-50%);
+            left: 50%;
+        }
+
+        /* 🥇 ESTILOS DEL GANADOR/EMPATE 🥇 */
+        .winner-announcement {
+            text-align: center;
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #4CAF50;
+            padding: 10px;
+            margin: 15px 0;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            background-color: #e8f5e9;
+            display: none;
+        }
+
+        .winner-announcement.draw {
+            color: #FF9800;
+            border-color: #FF9800;
+            background-color: #fff3e0;
+        }
+
+        .racer-marker.winner {
+            box-shadow: none; 
+        }
+
+        .racer-marker.winner .racer-icon {
+            /* Mantenemos el volteo horizontal y aplicamos el escalado */
+            transform: translate(-50%, -50%) scale(1.3) scaleX(-1); 
+            text-shadow: 0 0 10px rgba(255, 193, 7, 0.9); /* efecto de brillo dorado */
+            z-index: 10;
+        }
+
+        .racer-marker.winner .racer-name {
+            font-weight: bold;
+            color: gold;
+            text-shadow: 1px 1px 2px #333;
+        }
+
+
+        /* --- Modal de Instrucciones --- */
+        dialog {
+            border: none;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+        }
+
+        dialog h2 {
+            color: #007bff;
+            margin-top: 0;
+        }
+
+        dialog ul {
+            list-style-type: square;
+            padding-left: 20px;
+        }
+
+        dialog button {
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 id="game-title-header">Gameluen lasterketa</h1>
+        <button id="lang-toggle" class="lang-toggle-button">🇪🇸 Español</button>
+    </header>
+
+    <div class="tabs-header">
+        <button class="tab-button active" data-tab="tab1"><span class="tab-label">1. Lasterketa</span></button>
+        <button class="tab-button" data-tab="tab2"><span class="tab-label">2. Lasterketa</span></button>
+        <button class="tab-button" data-tab="tab3"><span class="tab-label">3. Lasterketa</span></button>
+    </div>
+
+    <div id="setup-controls" class="game-container">
+        <div class="setup-group">
+            <label id="label-players" for="num-players-input">Jokalariak:</label>
+            <input type="number" id="num-players-input" value="5" min="1" max="10">
+        </div>
+        <div class="setup-group">
+            <label id="label-rounds" for="num-rounds-input">Txandak:</label>
+            <input type="number" id="num-rounds-input" value="10" min="5" max="50">
+        </div>
+        <button id="restart-game-button" class="roll-button">Berrabiarazi/Ezarri</button>
+    </div>
+
+    <div class="game-container">
+        
+        <div id="tab1" class="tab-content active">
+            <div class="controls">
+                <button id="roll-dices-button-tab1" class="roll-button">Dadoak Bota</button>
+                <button id="check-results-button-tab1" class="check-button" disabled>Emaitzak Egiaztatu</button>
+                <button class="instructions-button" id="show-instructions-button-tab1">❓</button>
+            </div>
+            
+            <div id="winner-announcement-tab1" class="winner-announcement"></div>
+
+            <div class="race-track-container" data-tab-id="tab1">
+                <div class="track-label start-label">START (0)</div>
+                <div class="track-label end-label"></div>
+                <div class="race-track">
+                    </div>
+            </div>
+
+            <div id="players-container-tab1" class="players-container">
+                </div>
+        </div>
+
+        <div id="tab2" class="tab-content">
+            <div class="controls">
+                <button id="roll-dices-button-tab2" class="roll-button">Dadoak Bota</button>
+                <button id="check-results-button-tab2" class="check-button" disabled>Emaitzak Egiaztatu</button>
+                <button class="instructions-button" id="show-instructions-button-tab2">❓</button>
+            </div>
+            
+            <div id="winner-announcement-tab2" class="winner-announcement"></div>
+
+            <div class="race-track-container" data-tab-id="tab2">
+                <div class="track-label start-label">START (0)</div>
+                <div class="track-label end-label"></div>
+                <div class="race-track">
+                    </div>
+            </div>
+        </div>
+
+        <div id="tab3" class="tab-content">
+            <div class="controls">
+                <button id="roll-dices-button-tab3" class="roll-button">Dadoak Bota</button>
+                <button id="check-results-button-tab3" class="check-button" disabled>Emaitzak Egiaztatu</button>
+                <button class="instructions-button" id="show-instructions-button-tab3">❓</button>
+            </div>
+            
+            <div id="winner-announcement-tab3" class="winner-announcement"></div>
+
+            <div class="race-track-container" data-tab-id="tab3">
+                <div class="track-label start-label">START (0)</div>
+                <div class="track-label end-label"></div>
+                <div class="race-track">
+                    </div>
+            </div>
+        </div>
+
+    </div>
+    
+    <dialog id="instructions-modal">
+        <h2 id="modal-title">Jokoaren Argibideak</h2>
+        <div id="modal-content">
+            </div>
+        <button id="close-modal">Cerrar</button>
+    </dialog>
+
+    <script>
+        // Variables globales (AHORA SE ESTABLECEN AL INICIO)
+        let NUM_PLAYERS = 5; 
+        let NUM_ROUNDS = 10; 
+        let activeTab = 'tab1'; 
+        let lang = 'eu'; 
+
+        const possibleDiceValues = [-3, -2, -1, 1, 2, 3];
+        const possibleOperators = ['+', '-', '*'];
+
+        // CONTROLES DE SETUP
+        const numPlayersInput = document.getElementById('num-players-input');
+        const numRoundsInput = document.getElementById('num-rounds-input');
+        const restartGameButton = document.getElementById('restart-game-button');
+
+
+        let gameData = {
+            'tab1': [],
+            'tab2': [],
+            'tab3': []
+        };
+
+        // OBJETO PARA ALMACENAR EL ESTADO DE CADA PESTAÑA
+        let gameStates = {
+            'tab1': { currentRoundIndex: 0 },
+            'tab2': { currentRoundIndex: 0 },
+            'tab3': { currentRoundIndex: 0 }
+        };
+
+        // ** Referencias a contenedores y botones **
+        const playersContainer1 = document.getElementById('players-container-tab1');
+        const playersContainer2 = document.createElement('div');
+        playersContainer2.id = 'players-container-tab2';
+        playersContainer2.className = 'players-container';
+        document.getElementById('tab2').appendChild(playersContainer2);
+
+        const playersContainer3 = document.createElement('div');
+        playersContainer3.id = 'players-container-tab3';
+        playersContainer3.className = 'players-container';
+        document.getElementById('tab3').appendChild(playersContainer3);
+
+
+        const rollDicesButton1 = document.getElementById('roll-dices-button-tab1');
+        const checkResultsButton1 = document.getElementById('check-results-button-tab1');
+        const rollDicesButton2 = document.getElementById('roll-dices-button-tab2');
+        const checkResultsButton2 = document.getElementById('check-results-button-tab2');
+        const rollDicesButton3 = document.getElementById('roll-dices-button-tab3');
+        const checkResultsButton3 = document.getElementById('check-results-button-tab3');
+
+
+        const allRollButtons = { 'tab1': rollDicesButton1, 'tab2': rollDicesButton2, 'tab3': rollDicesButton3 };
+        const allCheckButtons = { 'tab1': checkResultsButton1, 'tab2': checkResultsButton2, 'tab3': checkResultsButton3 };
+
+        // ** Referencias al Modal de Instrucciones **
+        const instructionsModal = document.getElementById('instructions-modal');
+        const closeModalButton = document.getElementById('close-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalContent = document.getElementById('modal-content');
+
+
+        // Estructura de traducción
+        const translations = {
+            'eu': {
+                'game-title': 'Gameluen lasterketa',
+                'tab1-label': '1. Lasterketa',
+                'tab2-label': '2. Lasterketa',
+                'tab3-label': '3. Lasterketa',
+                'roll-button': 'Dadoak Bota',
+                'check-button': 'Emaitzak Egiaztatu',
+                'player-placeholder': 'Jokalariaren izena',
+                'col-pos': 'POS',
+                'col-era': 'ERA', 
+                'col-cha': 'TXA', 
+                'col-res': 'ER', 
+                'lang-toggle': '🇪🇸 Español',
+                'operator-select': 'Eragiketa...',
+                'winner-message': (name, score) => `ZORIONAK! ${name} irabazlea da ${score} punturekin!`,
+                'draw-message': 'Berdinketa! Puntuazio altuena duten jokalariak berdinduta daude.',
+                'setup-players': 'Jokalariak:', // Nuevo
+                'setup-rounds': 'Txandak:', // Nuevo
+                'restart-button': 'Berrabiarazi/Ezarri', // Nuevo
+                // TRADUCCIONES DE INSTRUCCIONES EN HTML PARA LEGIBILIDAD
+                'instructions-button': '❓',
+                'instructions-title': 'Jokoaren Argibideak',
+                'instructions-tab1': `
+                    <p><strong>1. Lasterketa (Erronka sinplea)</strong></p>
+                    <ul>
+                        <li><strong>Helburua</strong>: Iritsi puntuaziorik altuenera (Posizioa).</li>
+                        <li><strong>Jokabidea</strong>: Bota dadoa. Zenbaki positiboek aurreratu egiten zaituzte, eta negatiboek atzeratu.</li>
+                        <li><strong>Emaitza (ER zuzena)</strong>: Posizio berria = Posizio aurrekoa + Dadoaren balioa.</li>
+                        <li><strong>Akatsa (ER Okerra)</strong>: Zure emaitza okerra bada, zure posizioa <strong>Posizio aurrekoa - (|ER zuzena| + 1)</strong> izango da. Puntuazioa negatiboa izan daiteke.</li>
+                    </ul>
+                `,
+                'instructions-tab2': `
+                    <p><strong>2. Lasterketa (Eragiketa Aldakorra)</strong></p>
+                    <ul>
+                        <li><strong>Helburua</strong>: Iritsi puntuaziorik altuenera (Posizioa).</li>
+                        <li><strong>Jokabidea</strong>: Bi dado botatzen dira: batek zenbakia ematen du, eta besteak eragiketa (<strong>+</strong>, <strong>-</strong> o <strong>*</strong>).</li>
+                        <li><strong>Emaitza (ER zuzena)</strong>: Posizio berria = Posizio aurrekoa [Eragiketa] Dadoaren balioa.</li>
+                        <li><strong>Akatsa (ER Okerra)</strong>: Zure emaitza okerra bada, zure posizioa <strong>Posizio aurrekoa - (|ER zuzena| + 1)</strong> izango da. Puntuazioa negatiboa izan daiteke.</li>
+                    </ul>
+                `,
+                'instructions-tab3': `
+                    <p><strong>3. Lasterketa (Eragiketa Aukeragarria)</strong></p>
+                    <ul>
+                        <li><strong>Helburua</strong>: Iritsi puntuaziorik altuenera (Posizioa).</li>
+                        <li><strong>Jokabidea</strong>: Zenbaki-dadoa botatzen da. Jokalariak <strong>aukeratzen</strong> du eragiketa (<strong>+</strong>, <strong>-</strong> o <strong>*</strong>) menu despegagarrian.</li>
+                        <li><strong>Emaitza (ER zuzena)</strong>: Posizio berria = Posizio aurrekoa [Eragiketa aukeratua] Dadoaren balioa.</li>
+                        <li><strong>Akatsa (ER Okerra)</strong>: Zure emaitza okerra bada, zure posizioa <strong>Posizio aurrekoa - (|ER zuzena| + 1)</strong> izango da. Puntuazioa negatiboa izan daiteke.</li>
+                    </ul>
+                `
+            },
+            'es': {
+                'game-title': 'Carrera de camellos',
+                'tab1-label': '1ª Carrera',
+                'tab2-label': '2ª Carrera',
+                'tab3-label': '3ª Carrera',
+                'roll-button': 'Tirar Dados',
+                'check-button': 'Chequear Resultados',
+                'player-placeholder': 'Nombre del jugador',
+                'col-pos': 'POS',
+                'col-era': 'OPR', 
+                'col-cha': 'TIR', 
+                'col-res': 'RES', 
+                'lang-toggle': '⚫ Euskera',
+                'operator-select': 'Operación...',
+                'winner-message': (name, score) => `¡FELICIDADES! ${name} es el ganador con ${score} puntos!`,
+                'draw-message': '¡Empate! Los jugadores con la puntuación más alta están empatados.',
+                'setup-players': 'Jugadores:', // Nuevo
+                'setup-rounds': 'Rondas:', // Nuevo
+                'restart-button': 'Reiniciar/Establecer', // Nuevo
+                // TRADUCCIONES DE INSTRUCCIONES EN HTML PARA LEGIBILIDAD
+                'instructions-button': '❓',
+                'instructions-title': 'Instrucciones del Juego',
+                'instructions-tab1': `
+                    <p><strong>1. Carrera (Desafío Simple)</strong></p>
+                    <ul>
+                        <li><strong>Objetivo</strong>: Alcanzar la posición (Puntuación) más alta.</li>
+                        <li><strong>Mecánica</strong>: Se lanza un dado numérico. Los números positivos te hacen avanzar y los negativos retroceder.</li>
+                        <li><strong>Resultado (RES correcto)</strong>: Nueva Posición = Posición anterior + Valor del dado.</li>
+                        <li><strong>Error (RES Incorrecto)</strong>: Si tu resultado es incorrecto, tu posición será **Posición anterior - (|RES correcto| + 1)**. La puntuación puede ser negativa.</li>
+                    </ul>
+                `,
+                'instructions-tab2': `
+                    <p><strong>2. Carrera (Operación Variable)</strong></p>
+                    <ul>
+                        <li><strong>Objetivo</strong>: Alcanzar la posición (Puntuación) más alta.</li>
+                        <li><strong>Mecánica</strong>: Se lanzan dos dados: uno da el número y otro la operación (<strong>+</strong>, <strong>-</strong> o <strong>*</strong>).</li>
+                        <li><strong>Resultado (RES correcto)</strong>: Nueva Posición = Posición anterior [Operación] Valor del dado.</li>
+                        <li><strong>Error (RES Incorrecto)</strong>: Si tu resultado es incorrecto, tu posición será **Posición anterior - (|RES correcto| + 1)**. La puntuación puede ser negativa.</li>
+                    </ul>
+                `,
+                'instructions-tab3': `
+                    <p><strong>3. Carrera (Operación Elegible)</strong></p>
+                    <ul>
+                        <li><strong>Objetivo</strong>: Alcanzar la posición (Puntuación) más alta.</li>
+                        <li><strong>Mecánica</strong>: Se lanza un dado numérico. El jugador <strong>elige</strong> la operación (<strong>+</strong>, <strong>-</strong> o <strong>*</strong>) en el menú desplegable.</li>
+                        <li><strong>Resultado (RES correcto)</strong>: Nueva Posición = Posición anterior [Operación elegida] Valor del dado.</li>
+                        <li><strong>Error (RES Incorrecto)</strong>: Si tu resultado es incorrecto, tu posición será **Posición anterior - (|RES correcto| + 1)**. La puntuación puede ser negativa.</li>
+                    </ul>
+                `
+            }
+        };
+
+        /**
+         * 7. FUNCIÓN DE ALEATORIEDAD MEJORADA (Crypto API)
+         */
+        function getCryptoRandomIndex(array) {
+            // Genera un índice aleatorio usando la API de Web Cryptography para una mejor calidad
+            if (window.crypto && window.crypto.getRandomValues) {
+                const array32 = new Uint32Array(1);
+                window.crypto.getRandomValues(array32);
+                // Utiliza el operador módulo para asegurar que el índice esté dentro del rango del array
+                return array32[0] % array.length;
+            } else {
+                // Fallback a Math.random() si la API crypto no está disponible
+                return Math.floor(Math.random() * array.length);
+            }
+        }
+
+
+        /**
+         * 1. LÓGICA DE BILINGÜISMO
+         */
+
+        const langToggleBtn = document.getElementById('lang-toggle');
+
+        function updateContent(newLang) {
+            lang = newLang;
+            const t = translations[lang];
+
+            // Títulos y Textos
+            document.getElementById('game-title').textContent = t['game-title'];
+            document.getElementById('game-title-header').textContent = t['game-title'];
+            
+            // Controles de Setup
+            document.getElementById('label-players').textContent = t['setup-players'];
+            document.getElementById('label-rounds').textContent = t['setup-rounds'];
+            document.getElementById('restart-game-button').textContent = t['restart-button'];
+
+            // Botones de control (recorrer todos los botones)
+            Object.keys(allRollButtons).forEach(tabId => {
+                if(allRollButtons[tabId]) allRollButtons[tabId].textContent = t['roll-button'];
+                if(allCheckButtons[tabId]) allCheckButtons[tabId].textContent = t['check-button'];
+            });
+
+            // Botón de idioma
+            langToggleBtn.textContent = t['lang-toggle'];
+
+            // Botones de instrucciones
+            document.querySelectorAll('.instructions-button').forEach(btn => btn.textContent = t['instructions-button']);
+
+            // Título del Modal de Instrucciones
+            modalTitle.textContent = t['instructions-title'];
+
+            // Pestañas
+            document.querySelector('.tab-button[data-tab="tab1"] .tab-label').textContent = t['tab1-label'];
+            document.querySelector('.tab-button[data-tab="tab2"] .tab-label').textContent = t['tab2-label'];
+            document.querySelector('.tab-button[data-tab="tab3"] .tab-label').textContent = t['tab3-label'];
+
+            // Paneles de Jugadores (Nombres de Columna y Placeholders)
+            document.querySelectorAll('.player-panel').forEach(panel => {
+                panel.querySelector('.player-name-input').placeholder = t['player-placeholder'];
+                
+                if (panel.querySelector('th[data-col="pos"]')) panel.querySelector('th[data-col="pos"]').textContent = t['col-pos'];
+                if (panel.querySelector('th[data-col="era"]')) panel.querySelector('th[data-col="era"]').textContent = t['col-era'];
+                if (panel.querySelector('th[data-col="cha"]')) panel.querySelector('th[data-col="cha"]').textContent = t['col-cha'];
+                if (panel.querySelector('th[data-col="res"]')) panel.querySelector('th[data-col="res"]').textContent = t['col-res'];
+                
+                // Actualizar opción por defecto en los desplegables de tab3
+                panel.querySelectorAll('.era-select').forEach(select => {
+                    select.querySelector('option[value=""]').textContent = t['operator-select'];
+                });
+            });
+        }
+
+        langToggleBtn.addEventListener('click', () => {
+            const newLang = lang === 'eu' ? 'es' : 'eu';
+            updateContent(newLang);
+        });
+
+
+        /**
+         * 2. LÓGICA DE PESTAÑAS
+         */
+
+        document.querySelectorAll('.tabs-header .tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+                
+                const tabId = button.getAttribute('data-tab');
+                button.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+                
+                
+                activeTab = tabId;
+                
+                
+                // Deshabilitar/Habilitar botones para la pestaña activa
+                Object.keys(allRollButtons).forEach(key => {
+                    if (key === activeTab) {
+                        const currentRound = gameStates[activeTab].currentRoundIndex;
+                        const rollButton = allRollButtons[activeTab];
+                        const checkButton = allCheckButtons[activeTab];
+
+                        if (currentRound >= NUM_ROUNDS) {
+                            rollButton.disabled = true;
+                            checkButton.disabled = true; // Si ha terminado, chequear está deshabilitado
+                        } else {
+                            rollButton.disabled = false;
+                            checkButton.disabled = true; // Por defecto, chequear deshabilitado
+                        }
+                    } else {
+                        allRollButtons[key].disabled = true;
+                        allCheckButtons[key].disabled = true;
+                    }
+                });
+
+                // Limpiar anuncio al cambiar de pestaña
+                document.getElementById(`winner-announcement-${tabId}`).style.display = 'none';
+                
+                // ✅ Actualizar la pista de carreras al cambiar de pestaña
+                updateRaceTrack();
+            });
+        });
+
+
+        /**
+         * 3. LÓGICA DEL JUEGO (Pestañas 1, 2 y 3)
+         */
+
+        function createPlayerPanel(id, tabId) {
+            const t = translations[lang];
+            const panel = document.createElement('div');
+            panel.className = 'player-panel';
+            panel.id = `player-${tabId}-${id}`;
+            
+            let diceArea = '';
+            
+            // DADO DE OPERACIÓN (CARRERA 2)
+            if (tabId === 'tab2') {
+                diceArea = `
+                    <div class="dice-area-double">
+                        <div class="dice-animation dice-operator" data-player-id="${id}-op">
+                            <div class="dice-face face-front">&nbsp;</div> 
+                            <div class="dice-face face-back">-</div>
+                            <div class="dice-face face-right">*</div>
+                            <div class="dice-face face-left">+</div>
+                            <div class="dice-face face-top">-</div>
+                            <div class="dice-face face-bottom">*</div>
+                        </div>
+                        <div class="dice-animation dice-number" data-player-id="${id}-num">
+                            <div class="dice-face face-front">&nbsp;</div> 
+                            <div class="dice-face face-back">-3</div>
+                            <div class="dice-face face-right">1</div>
+                            <div class="dice-face face-left">-1</div>
+                            <div class="dice-face face-top">2</div>
+                            <div class="dice-face face-bottom">-2</div>
+                        </div>
+                    </div>
+                `;
+            } else if (tabId === 'tab1' || tabId === 'tab3') {
+                // DADO NUMÉRICO (CARRERAS 1 Y 3)
+                diceArea = `
+                    <div class="dice-area-single">
+                        <div class="dice-animation dice-number" data-player-id="${id}-num">
+                            <div class="dice-face face-front">&nbsp;</div> 
+                            <div class="dice-face face-back">-3</div>
+                            <div class="dice-face face-right">1</div>
+                            <div class="dice-face face-left">-1</div>
+                            <div class="dice-face face-top">2</div>
+                            <div class="dice-face face-bottom">-2</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let tableHeaders = `
+                <tr>
+                    <th data-col="pos">${t['col-pos']}</th>
+                    <th data-col="era">${t['col-era']}</th> 
+                    <th data-col="cha">${t['col-cha']}</th>
+                    <th data-col="res">${t['col-res']}</th>
+                </tr>`;
+            
+            panel.innerHTML += `
+                <input type="text" class="player-name-input" placeholder="${t['player-placeholder']}" value="${t['player-placeholder']} ${id + 1}">
+                ${diceArea}
+            `;
+            
+            
+            const table = document.createElement('table');
+            table.className = 'player-table';
+            
+            
+            // Cuerpo de la tabla
+            const tbodyContent = Array.from({ length: NUM_ROUNDS + 1 }, (_, i) => {
+                const isStartRow = (i === 0);
+                const isGameRow = (i < NUM_ROUNDS);
+                
+                let cells = '';
+                
+                // Columna POS (Posición del Camello / Puntuación)
+                cells += `<td class="pos-cell" data-value="${isStartRow ? 0 : ''}">${isStartRow ? 0 : 0}</td>`;
+                
+                // Columna ERA (Operador)
+                if (tabId === 'tab2') {
+                    cells += `<td class="era-cell"></td>`;
+                } else if (tabId === 'tab3' && isGameRow) {
+                    
+                    cells += `<td class="era-cell">
+                        <select class="era-select" data-round="${i}" disabled>
+                            <option value="">${t['operator-select']}</option>
+                            ${possibleOperators.map(op => `<option value="${op}">${op}</option>`).join('')}
+                        </select>
+                    </td>`;
+                } else if (tabId === 'tab3' && isStartRow) {
+                    cells += `<td class="era-cell"></td>`;
+                }
+
+                // Columna CHA (Tirada del Dado)
+                cells += `<td class="cha-cell"></td>`;
+                
+                // Columna RES (Resultado/Input)
+                cells += `<td class="res-cell">${isGameRow ? `<input type="number" class="res-input" data-round="${i}" disabled>` : ''}</td>`;
+                
+                return `<tr data-round="${i}">${cells}</tr>`;
+            }).join('');
+            
+            table.innerHTML = `<thead>${tableHeaders}</thead><tbody data-player-id="${tabId}-${id}">${tbodyContent}</tbody>`;
+            panel.appendChild(table);
+
+            return panel;
+        }
+
+        function initializeGame(resetRounds = true) {
+            
+            // 0. Leer los nuevos valores de setup
+            const newNumPlayers = parseInt(numPlayersInput.value);
+            const newNumRounds = parseInt(numRoundsInput.value);
+
+            // 1. Validar y actualizar variables globales
+            NUM_PLAYERS = Math.max(1, Math.min(10, isNaN(newNumPlayers) ? 5 : newNumPlayers)); // Min 1, Max 10
+            NUM_ROUNDS = Math.max(5, Math.min(50, isNaN(newNumRounds) ? 15 : newNumRounds)); // Min 5, Max 50
+            numPlayersInput.value = NUM_PLAYERS;
+            numRoundsInput.value = NUM_ROUNDS;
+
+            // 2. Reiniciar estados de juego si se pide
+            if (resetRounds) {
+                gameStates = {
+                    'tab1': { currentRoundIndex: 0 },
+                    'tab2': { currentRoundIndex: 0 },
+                    'tab3': { currentRoundIndex: 0 }
+                };
+            }
+            
+            document.getElementById('tab2').appendChild(playersContainer2);
+            document.getElementById('tab3').appendChild(playersContainer3);
+            
+            // 3. Recrear Paneles de Jugadores y Tablas
+            
+            // Limpiar y generar para Pestaña 1
+            playersContainer1.innerHTML = '';
+            for (let i = 0; i < NUM_PLAYERS; i++) {
+                playersContainer1.appendChild(createPlayerPanel(i, 'tab1'));
+            }
+
+            // Limpiar y generar para Pestaña 2
+            playersContainer2.innerHTML = '';
+            for (let i = 0; i < NUM_PLAYERS; i++) {
+                playersContainer2.appendChild(createPlayerPanel(i, 'tab2'));
+            }
+            
+            // Limpiar y generar para Pestaña 3
+            playersContainer3.innerHTML = '';
+            for (let i = 0; i < NUM_PLAYERS; i++) {
+                playersContainer3.appendChild(createPlayerPanel(i, 'tab3'));
+            }
+
+            
+            gameData['tab1'] = [];
+            gameData['tab2'] = [];
+            gameData['tab3'] = [];
+
+            for (let i = 0; i < NUM_PLAYERS; i++) {
+                gameData['tab1'].push({
+                    playerId: i,
+                    diceValue: null,
+                    tableRows: document.querySelector(`tbody[data-player-id="tab1-${i}"]`).children 
+                });
+                gameData['tab2'].push({
+                    playerId: i,
+                    diceValue: null,
+                    operator: null, 
+                    tableRows: document.querySelector(`tbody[data-player-id="tab2-${i}"]`).children 
+                });
+                gameData['tab3'].push({
+                    playerId: i,
+                    diceValue: null,
+                    operator: null, 
+                    tableRows: document.querySelector(`tbody[data-player-id="tab3-${i}"]`).children 
+                });
+            }
+
+            // 4. Asegurar que los botones de la pestaña activa estén correctamente habilitados/deshabilitados
+            const currentRound = gameStates[activeTab].currentRoundIndex;
+            Object.keys(allRollButtons).forEach(key => {
+                if (key === activeTab) {
+                    allRollButtons[key].disabled = (currentRound >= NUM_ROUNDS);
+                    allCheckButtons[key].disabled = true;
+                } else {
+                    allRollButtons[key].disabled = true;
+                    allCheckButtons[key].disabled = true;
+                }
+            });
+
+            // 5. Limpiar anuncios
+            document.getElementById(`winner-announcement-tab1`).style.display = 'none';
+            document.getElementById(`winner-announcement-tab2`).style.display = 'none';
+            document.getElementById(`winner-announcement-tab3`).style.display = 'none';
+
+            // 6. CREAR Y POSICIONAR LA ESTRUCTURA INICIAL DE PISTAS Y MARCADORES (NUEVO)
+            createRaceTrackStructure('tab1');
+            createRaceTrackStructure('tab2');
+            createRaceTrackStructure('tab3');
+
+            updateContent(lang); 
+
+            // 7. Llamada inicial para actualizar la pista
+            updateRaceTrack(); 
+        }
+
+        // Evento para el botón de Reiniciar/Establecer
+        restartGameButton.addEventListener('click', () => {
+            initializeGame(true); // Reinicia todo
+        });
+
+        /**
+         * NUEVA FUNCIÓN: Crea la estructura HTML inicial de las pistas y camellos.
+         * Se llama solo al iniciar/reiniciar el juego.
+         */
+        function createRaceTrackStructure(tabId) {
+            const trackContainer = document.querySelector(`.race-track-container[data-tab-id="${tabId}"]`);
+            const track = trackContainer ? trackContainer.querySelector('.race-track') : null;
+            if (!track) return;
+            
+            // Limpiar la estructura ANTES de crear
+            track.innerHTML = '';
+            
+            // Crear N pistas individuales con su marcador
+            for (let i = 0; i < NUM_PLAYERS; i++) {
+                const t = translations[lang];
+                
+                // A) Crear la línea de pista individual
+                let individualTrack = document.createElement('div');
+                individualTrack.className = 'individual-track';
+                individualTrack.id = `track-${tabId}-${i}`; 
+                
+                // B) Crear el marcador del camello (posición inicial 0%)
+                let marker = document.createElement('div');
+                marker.className = 'racer-marker';
+                marker.setAttribute('data-player-id', i);
+                marker.style.left = `0%`; // Posición inicial fija
+
+                // Contenido interno del marker: icon, number, name (Inicialmente con nombre y posición 0)
+                const playerName = document.querySelector(`#player-${tabId}-${i} .player-name-input`)?.value || `${t['player-placeholder']} ${i + 1}`;
+                
+                marker.innerHTML = `
+                    <span class="racer-icon">🐪</span>
+                    <span class="racer-number">${i + 1}</span> 
+                    <span class="racer-name">${playerName} (0)</span>
+                `;
+                
+                // C) Insertar el marcador dentro de su línea de pista
+                individualTrack.appendChild(marker);
+                
+                // D) Insertar la línea de pista en el contenedor principal
+                track.appendChild(individualTrack);
+            }
+        }
+
+
+        /**
+         * 4. GESTIÓN DE EVENTOS DE JUEGO (Tirar dados y Chequear)
+         */
+
+        function handleRollDices() {
+            // USAR EL ESTADO DE LA PESTAÑA ACTIVA
+            const currentRoundIndex = gameStates[activeTab].currentRoundIndex;
+            
+            const rollButton = allRollButtons[activeTab];
+            const checkButton = allCheckButtons[activeTab];
+
+            if (currentRoundIndex >= NUM_ROUNDS || !rollButton || rollButton.disabled) return; 
+
+            rollButton.disabled = true;
+            checkButton.disabled = true;
+            
+            // Ocultar el anuncio y limpiar resaltados al empezar una nueva ronda
+            document.getElementById(`winner-announcement-${activeTab}`).style.display = 'none';
+            document.querySelectorAll(`#${activeTab} .racer-marker`).forEach(marker => {
+                marker.classList.remove('winner');
+            });
+
+            
+            const currentData = gameData[activeTab];
+            let numDiceElements; 
+
+            
+            if (activeTab === 'tab1' || activeTab === 'tab3') { 
+                // 1 DADO: Numérico
+                numDiceElements = document.querySelectorAll(`#${activeTab} .dice-number`);
+                document.querySelectorAll(`#${activeTab} .dice-animation`).forEach(dice => {
+                    dice.classList.remove('stopped-3d', 'result-display');
+                    dice.classList.add('rolling');
+                    dice.querySelector('.dice-face.final-result')?.classList.remove('final-result');
+                });
+            } else if (activeTab === 'tab2') {
+                // 2 DADOS: Operador y Numérico
+                numDiceElements = document.querySelectorAll(`#tab2 .dice-number`);
+                const operatorElements = document.querySelectorAll(`#tab2 .dice-operator`);
+                
+                // Resetear y lanzar el dado de Operación
+                operatorElements.forEach((dice, playerId) => {
+                    dice.classList.remove('stopped-3d', 'result-display');
+                    dice.classList.add('rolling');
+                    dice.querySelector('.dice-face.final-result')?.classList.remove('final-result');
+                    
+                    const opRollIndex = getCryptoRandomIndex(possibleOperators);
+                    const operatorValue = possibleOperators[opRollIndex];
+                    currentData[playerId].operator = operatorValue; // Almacenar el operador
+                });
+                
+                // Resetear y lanzar el dado Numérico
+                numDiceElements.forEach(dice => {
+                    dice.classList.remove('stopped-3d', 'result-display');
+                    dice.classList.add('rolling');
+                    dice.querySelector('.dice-face.final-result')?.classList.remove('final-result');
+                });
+            }
+            
+            
+            document.querySelectorAll(`#${activeTab} .res-input`).forEach(input => {
+                input.removeEventListener('input', checkAllAnswersReady);
+                input.disabled = true;
+            });
+            
+            
+            if (activeTab === 'tab3') {
+                // Deshabilitar el selector de operación al tirar dados (Carrera 3)
+                document.querySelectorAll(`#${activeTab} .era-select`).forEach(select => {
+                    select.disabled = true;
+                });
+            }
+            
+            
+            numDiceElements.forEach((dice, playerId) => {
+                // USAR ALEATORIEDAD MEJORADA para el valor del dado
+                const rollIndex = getCryptoRandomIndex(possibleDiceValues);
+                const diceValue = possibleDiceValues[rollIndex];
+                currentData[playerId].diceValue = diceValue;
+            });
+
+            
+            setTimeout(() => {
+                currentData.forEach((player, playerId) => {
+                    const diceValue = player.diceValue;
+                    // USAR EL ESTADO DE LA PESTAÑA ACTIVA
+                    const currentRow = player.tableRows[gameStates[activeTab].currentRoundIndex];
+                    
+                    // 1. DADO NUMÉRICO (Todas las carreras lo tienen)
+                    const numDice = document.querySelector(`#${activeTab} #player-${activeTab}-${playerId} [data-player-id="${playerId}-num"]`);
+                    if (numDice) {
+                        numDice.classList.remove('rolling');
+                        numDice.classList.add('result-display');
+                        numDice.classList.add('stopped-3d'); // Forzar la posición final 3D
+                        
+                        const numResultFace = numDice.querySelector('.face-front');
+                        numResultFace.textContent = diceValue;
+                        numResultFace.classList.add('final-result');
+                    }
+
+                    // 2. DADO DE OPERACIÓN (Solo Carrera 2)
+                    if (activeTab === 'tab2') {
+                        const operatorDice = document.querySelector(`#tab2 #player-tab2-${playerId} [data-player-id="${playerId}-op"]`);
+                        const operatorValue = player.operator;
+
+                        if (operatorDice) {
+                            operatorDice.classList.remove('rolling');
+                            operatorDice.classList.add('result-display');
+                            operatorDice.classList.add('stopped-3d'); // Forzar la posición final 3D
+                            
+                            const opResultFace = operatorDice.querySelector('.face-front');
+                            opResultFace.textContent = operatorValue;
+                            opResultFace.classList.add('final-result');
+
+                            // Restaurar la visualización del operador en la celda ERA (Carrera 2)
+                            const eraCell = currentRow.querySelector('.era-cell');
+                            eraCell.textContent = operatorValue;
+                        }
+                    }
+                    
+                    const chaCell = currentRow.querySelector('.cha-cell');
+                    chaCell.textContent = diceValue;
+                    
+                    let resInput = currentRow.querySelector('.res-input');
+
+                    
+                    if (activeTab === 'tab3') {
+                        // Habilitar el selector de operación
+                        const eraSelect = currentRow.querySelector('.era-select');
+                        if (eraSelect) eraSelect.disabled = false;
+                    }
+                    
+                    if (resInput) {
+                        // Habilitar input y añadir listener
+                        resInput.disabled = false;
+                        resInput.addEventListener('input', checkAllAnswersReady);
+                        
+                        resInput.value = '';
+                        resInput.classList.remove('correct-answer', 'incorrect-answer');
+                    }
+                });
+
+            }, 1000); 
+        }
+
+        function handleCheckResults() {
+            // USAR EL ESTADO DE LA PESTAÑA ACTIVA
+            const currentRoundIndex = gameStates[activeTab].currentRoundIndex;
+            
+            const checkButton = allCheckButtons[activeTab];
+            if (checkButton.disabled) return;
+            
+            checkButton.disabled = true;
+            
+            const currentData = gameData[activeTab];
+
+            currentData.forEach((player, playerId) => {
+                const currentRowIndex = currentRoundIndex; 
+                const currentRow = player.tableRows[currentRowIndex];
+                
+                // Intentamos acceder a la fila siguiente, si existe. Esto es importante
+                const nextRow = (currentRowIndex + 1 < player.tableRows.length) ? player.tableRows[currentRowIndex + 1] : null;
+
+                const resInput = currentRow.querySelector('.res-input');
+                
+                let diceValue = player.diceValue;
+                let playerResult = parseInt(resInput.value);
+                let correctResult;
+                let operator;
+                
+                // Obtener la posición anterior
+                const prevPos = parseInt(currentRow.querySelector('.pos-cell').getAttribute('data-value'));
+                
+                
+                if (activeTab === 'tab1') {
+                    // CÁLCULO: Posición anterior + Dado
+                    correctResult = prevPos + diceValue;
+                } else if (activeTab === 'tab2') {
+                    // CÁLCULO: Posición anterior [Op] Dado
+                    operator = player.operator; 
+                    try {
+                        correctResult = eval(`${prevPos} ${operator} ${diceValue}`);
+                    } catch (e) {
+                        correctResult = NaN;
+                    }
+                } else if (activeTab === 'tab3') {
+                    // CÁLCULO: Posición anterior [Op Elegida] Dado
+                    const eraSelect = currentRow.querySelector('.era-select');
+                    operator = eraSelect.value;
+                    currentRow.querySelector('.era-cell').textContent = operator;
+                    eraSelect.disabled = true; 
+                    try {
+                        correctResult = eval(`${prevPos} ${operator} ${diceValue}`);
+                    } catch (e) {
+                        correctResult = NaN;
+                    }
+                }
+                
+                const isCorrect = (playerResult === correctResult);
+                let nextPos;
+                
+                if (isCorrect) {
+                    resInput.classList.add('correct-answer');
+                    nextPos = correctResult;
+                } else {
+                    // 🛑 PENALIZACIÓN: Posición Anterior - (|R_correcto| + 1)
+                    resInput.classList.add('incorrect-answer');
+                    const penalty = Math.abs(correctResult) + 1;
+                    nextPos = prevPos - penalty; 
+                }
+                
+                if (nextRow) {
+                    // Solo actualizamos si la siguiente fila existe
+                    nextRow.querySelector('.pos-cell').textContent = nextPos; 
+                    nextRow.querySelector('.pos-cell').setAttribute('data-value', nextPos); 
+                }
+                
+                resInput.disabled = true; 
+            });
+
+            
+            // ACTUALIZAR EL ESTADO DE LA PESTAÑA ACTIVA
+            gameStates[activeTab].currentRoundIndex++;
+            const nextRoundIndex = gameStates[activeTab].currentRoundIndex;
+
+            
+            if (nextRoundIndex >= NUM_ROUNDS) {
+                allRollButtons[activeTab].disabled = true;
+                announceWinner(); 
+            } else {
+                allRollButtons[activeTab].disabled = false;
+            }
+
+            // ACTUALIZAR la pista de carreras (AQUÍ ES DONDE SE ACTIVA LA ANIMACIÓN)
+            updateRaceTrack(); 
+        }
+
+        // Añadir Listeners a los botones de cada pestaña
+        rollDicesButton1.addEventListener('click', handleRollDices);
+        checkResultsButton1.addEventListener('click', handleCheckResults);
+
+        rollDicesButton2.addEventListener('click', handleRollDices);
+        checkResultsButton2.addEventListener('click', handleCheckResults);
+
+        rollDicesButton3.addEventListener('click', handleRollDices);
+        checkResultsButton3.addEventListener('click', handleCheckResults);
+
+
+        /**
+         * Verificar si todos los jugadores han ingresado un valor
+         */
+        function checkAllAnswersReady() {
+            // USAR EL ESTADO DE LA PESTAÑA ACTIVA
+            const currentRoundIndex = gameStates[activeTab].currentRoundIndex;
+            
+            let allReady = true;
+            
+            document.querySelectorAll(`#${activeTab} .player-panel`).forEach((panel, playerId) => {
+                // Solo chequeamos si la ronda actual existe para este jugador
+                if (playerId < gameData[activeTab].length) { 
+                    const playerState = gameData[activeTab][playerId];
+                    if (currentRoundIndex < playerState.tableRows.length - 1) { // -1 porque la última fila es la final
+                        const currentRow = playerState.tableRows[currentRoundIndex];
+                        const resInput = currentRow.querySelector('.res-input');
+                        
+                        if (activeTab === 'tab3') {
+                            const eraSelect = currentRow.querySelector('.era-select');
+                            
+                            // En tab3, se necesita valor de input Y valor de select
+                            if (!resInput || resInput.value.trim() === '' || !eraSelect || eraSelect.value === '') {
+                                allReady = false;
+                            }
+                        } else {
+                            // En tab1 y tab2, solo se necesita valor de input
+                            if (!resInput || resInput.value.trim() === '') {
+                                allReady = false;
+                            }
+                        }
+                    }
+                }
+            });
+
+            allCheckButtons[activeTab].disabled = !allReady;
+        }
+
+
+        /**
+         * 6. LÓGICA DE LA PISTA DE CARRERAS (RECTA NUMÉRICA)
+         * MODIFICADA: Ahora solo actualiza la posición de los marcadores existentes.
+         */
+        function updateRaceTrack() {
+            // Asegura que el selector apunte al contenedor de la pestaña activa
+            const trackContainer = document.querySelector(`.race-track-container[data-tab-id="${activeTab}"]`);
+            const track = trackContainer ? trackContainer.querySelector('.race-track') : null;
+            if (!track) return;
+
+            const currentData = gameData[activeTab];
+            const currentRoundIndex = gameStates[activeTab].currentRoundIndex;
+            const t = translations[lang];
+
+            // 1. OBTENER POSICIONES Y RANGO
+            let positions = currentData.map((player) => {
+                // La posición del camello SIEMPRE se toma de la columna POS
+                const scoreIndex = Math.min(currentRoundIndex, NUM_ROUNDS);
+                const currentPosCell = player.tableRows[scoreIndex]?.querySelector('.pos-cell');
+                return parseInt(currentPosCell?.getAttribute('data-value') || 0, 10);
+            });
+
+            // 2. DEFINIR MÁRGENES Y RANGO TOTAL
+            let minPos = Math.min(0, ...positions);
+            let maxPos = Math.max(0, ...positions);
+            
+            // Si minPos y maxPos son ambos 0 (inicio), ajustamos el rango a -10/10 para separar
+            if (minPos === 0 && maxPos === 0) {
+                minPos = -10; 
+                maxPos = 10;
+            }
+            
+            const MARGIN = 10; 
+            const range = (maxPos - minPos) + MARGIN * 2;
+            const adjustedMin = minPos - MARGIN;
+
+            // 3. ACTUALIZAR POSICIONES DE MARCADORES EXISTENTES
+            currentData.forEach((player, playerId) => {
+                const pos = positions[playerId];
+                const nameInput = document.querySelector(`#player-${activeTab}-${playerId} .player-name-input`);
+                const playerName = nameInput ? nameInput.value : `${t['player-placeholder']} ${playerId + 1}`;
+                
+                // Calcular la posición relativa en porcentaje (de 0% a 100%)
+                let percentage = ((pos - adjustedMin) / range) * 100;
+                percentage = Math.max(0, Math.min(100, percentage));
+
+                // Seleccionar el marcador existente
+                const marker = document.querySelector(`.race-track-container[data-tab-id="${activeTab}"] .racer-marker[data-player-id="${playerId}"]`);
+                
+                if (marker) {
+                    // **CORRECCIÓN CRÍTICA:** Usar requestAnimationFrame para asegurar la animación
+                    window.requestAnimationFrame(() => {
+                        marker.style.left = `${percentage}%`;
+                    });
+
+                    // Actualizar etiquetas del camello
+                    marker.querySelector('.racer-name').textContent = `${playerName} (${pos})`;
+                    
+                    // Asegurarse de que el número de jugadores no ha disminuido, si ha disminuido
+                    marker.style.display = (playerId < NUM_PLAYERS) ? 'block' : 'none';
+                }
+            });
+            
+            // 4. Actualizar etiquetas (START/END) - Ocultas por CSS, pero actualizamos el valor lógico
+            const startLabel = trackContainer.querySelector('.start-label');
+            const endLabel = trackContainer.querySelector('.end-label');
+
+            if (startLabel) {
+                startLabel.textContent = `START (${adjustedMin})`; 
+            }
+            if (endLabel) {
+                const adjustedMax = maxPos + MARGIN;
+                endLabel.textContent = `END (${adjustedMax})`;
+            }
+
+        }
+
+
+        /**
+         * ANUNCIO DEL GANADOR INTEGRADO
+         */
+        function announceWinner() {
+            const t = translations[lang];
+            const announcementContainer = document.getElementById(`winner-announcement-${activeTab}`);
+
+            let maxScore = -Infinity;
+            let winners = [];
+            
+            const currentData = gameData[activeTab];
+
+            // 1. LIMPIAR cualquier resaltado anterior en la pista
+            document.querySelectorAll(`#${activeTab} .racer-marker`).forEach(marker => {
+                marker.classList.remove('winner');
+            });
+
+            // 2. ENCONTRAR GANADOR(ES)
+            currentData.forEach((player, playerId) => {
+                // La puntuación final se encuentra en la última fila de la tabla (índice NUM_ROUNDS)
+                const finalRow = player.tableRows[NUM_ROUNDS]; 
+                
+                // El ganador siempre se determina por la columna POS
+                const finalScore = parseInt(finalRow?.querySelector('.pos-cell')?.getAttribute('data-value') || 0);
+                
+                if (finalScore > maxScore) {
+                    maxScore = finalScore;
+                    winners = [playerId];
+                } else if (finalScore === maxScore) {
+                    winners.push(playerId);
+                }
+            });
+
+            // 3. GENERAR MENSAJE Y APLICAR RESALTADO
+            let message;
+            if (winners.length === 1) {
+                const winnerId = winners[0];
+                const winnerName = document.querySelector(`#player-${activeTab}-${winnerId} .player-name-input`).value || `${t['player-placeholder']} ${winnerId + 1}`;
+                message = t['winner-message'](winnerName, maxScore);
+                
+                // Resaltar al ganador en la pista
+                const winnerMarker = document.querySelector(`.race-track-container[data-tab-id="${activeTab}"] .racer-marker[data-player-id="${winnerId}"]`);
+                if (winnerMarker) {
+                    winnerMarker.classList.add('winner');
+                }
+                announcementContainer.classList.remove('draw');
+            } else {
+                const winnerNames = winners.map(id => document.querySelector(`#player-${activeTab}-${id} .player-name-input`).value || `${t['player-placeholder']} ${id + 1}`).join(', ');
+                message = `${t['draw-message']} (${winnerNames}). Puntuazioa: ${maxScore}.`;
+                
+                // Resaltar a todos los empatados
+                winners.forEach(id => {
+                    const drawMarker = document.querySelector(`.race-track-container[data-tab-id="${activeTab}"] .racer-marker[data-player-id="${id}"]`);
+                    if (drawMarker) {
+                        drawMarker.classList.add('winner');
+                    }
+                });
+                announcementContainer.classList.add('draw');
+            }
+
+            // 4. MOSTRAR EL MENSAJE EN EL CONTENEDOR
+            announcementContainer.textContent = message;
+            announcementContainer.style.display = 'block';
+        }
+
+        /**
+         * 5. LÓGICA DE INSTRUCCIONES (Usando <dialog>)
+         */
+
+        function showInstructions() {
+            const t = translations[lang];
+            let instructionHTML = '';
+            
+            // Elige el HTML de las instrucciones correctas
+            if (activeTab === 'tab1') {
+                instructionHTML = t['instructions-tab1'];
+            } else if (activeTab === 'tab2') {
+                instructionHTML = t['instructions-tab2'];
+            } else if (activeTab === 'tab3') {
+                instructionHTML = t['instructions-tab3'];
+            }
+
+            // Actualiza el contenido del modal y lo muestra
+            modalTitle.textContent = t['instructions-title'];
+            modalContent.innerHTML = instructionHTML;
+            instructionsModal.showModal();
+        }
+
+        // Añadir Listeners para el botón de abrir y cerrar el modal
+        document.getElementById('show-instructions-button-tab1').addEventListener('click', showInstructions);
+        document.getElementById('show-instructions-button-tab2').addEventListener('click', showInstructions);
+        document.getElementById('show-instructions-button-tab3').addEventListener('click', showInstructions);
+
+        closeModalButton.addEventListener('click', () => {
+            instructionsModal.close();
+        });
+
+        // Inicializar el juego y el idioma al cargar la página
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeGame(true);
+            updateContent('eu');
+            
+            // Asegurar que solo la pestaña 1 esté activa al inicio
+            document.getElementById('tab1').classList.add('active');
+            document.querySelector('.tab-button[data-tab="tab1"]').classList.add('active');
+            activeTab = 'tab1';
+        });
+    </script>
+</body>
+</html>
