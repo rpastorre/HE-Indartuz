@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="eu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conecta 4 / Lauko</title>
+<style>
+:root {
+  --cell-size: 70px;
+  --gap: 10px;
+  --board-blue: #1565c0;
+  --red: #e53935;
+  --yellow: #fdd835;
+}
+
+body {
+  font-family: "Segoe UI", sans-serif;
+  background: #f0f2f5;
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  text-align: center;
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+h1 {
+  font-size: 1.3em;
+  margin: 0;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+select, button {
+  padding: 4px 8px;
+  font-size: 1em;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+#column-selectors {
+  display: grid;
+  grid-template-columns: repeat(7, var(--cell-size));
+  gap: var(--gap);
+  margin: 0 auto 10px;
+  width: calc(var(--cell-size) * 7 + var(--gap) * 6);
+}
+
+#column-selectors div {
+  background-color: #e8e8e8;
+  border-radius: 5px 5px 0 0;
+  padding: 5px 0;
+  cursor: pointer;
+  transition: background 0.3s;
+  user-select: none;
+}
+#column-selectors div:nth-child(even) { background-color: #d8d8d8; }
+#column-selectors div:hover { background-color: #a0a0a0; }
+
+.board-wrap {
+  position: relative;
+  padding: 12px 0;
+  background: var(--board-blue);
+  border-radius: 10px;
+  display: block;
+  width: calc(var(--cell-size) * 7 + var(--gap) * 6);
+  margin: 0 auto;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, var(--cell-size));
+  grid-template-rows: repeat(6, var(--cell-size));
+  gap: var(--gap);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));
+  border-radius: 8px;
+}
+
+.cell {
+  background: radial-gradient(circle at 30% 30%, #ddd, #999);
+  border-radius: 50%;
+  box-shadow: inset 5px 5px 8px rgba(0,0,0,0.3), inset -5px -5px 8px rgba(255,255,255,0.3);
+}
+
+.pieces-layer {
+  position: absolute;
+  left: 0;
+  top: 12px;
+  pointer-events: none;
+}
+
+.piece {
+  width: var(--cell-size);
+  height: var(--cell-size);
+  border-radius: 50%;
+  position: absolute;
+  transition: top 0.4s ease;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.piece.red { background: var(--red); }
+.piece.yellow { background: var(--yellow); }
+
+.highlight {
+  outline: 3px solid #fff;
+  opacity: 0.7;
+}
+
+/* Fichas ganadoras */
+.winning-piece {
+  animation: blink 0.8s ease-in-out infinite alternate;
+  box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.9);
+  z-index: 3;
+}
+
+@keyframes blink {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.2); opacity: 0.6; }
+}
+
+.status {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.turn-indicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1 id="title">Conecta 4</h1>
+    <div class="controls">
+      <label id="difficulty-label">Zailtasuna</label>
+      <select id="difficulty">
+        <option value="2">Ertaina 2</option>
+        <option value="4" selected>Sakona 4</option>
+        <option value="6">Aurreratua 6</option>
+      </select>
+      <button id="lang-btn">ES</button>
+      <button id="reset-btn">Berrezarri / Reset</button>
+    </div>
+  </header>
+
+  <div id="column-selectors"></div>
+
+  <div class="board-wrap">
+    <div class="pieces-layer" id="pieces-layer"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="status">
+    <div class="turn-indicator" id="turn-indicator" style="background: var(--red)"></div>
+    <div id="status-text">Zure txanda da! (Gorria)</div>
+  </div>
+</div>
+
+<script>
+const ROWS = 6, COLS = 7;
+let board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+let gameOver = false;
+let currentPlayer = 1; // 1 jugador rojo, -1 IA amarilla
+let lang = "eu";
+let difficulty = 4;
+
+const texts = {
+  eu: {
+    title: "4 Konektatu",
+    difficulty: "Zailtasuna",
+    diffLevels: ["Ertaina 2", "Sakona 4", "Aurreratua 6"],
+    reset: "Berrezarri / Reset",
+    yourTurn: "Zure txanda da! (Gorria)",
+    aiTurn: "Ordenagailuaren txanda...",
+    youWin: "Irabazi duzu! (Gorria)",
+    aiWin: "Ordenagailuak irabazi duzu! (Horia)",
+    draw: "Berdinketa!"
+  },
+  es: {
+    title: "Conecta 4",
+    difficulty: "Dificultad",
+    diffLevels: ["Media 2", "Profunda 4", "Avanzada 6"],
+    reset: "Reiniciar / Reset",
+    yourTurn: "¡Tu turno! (Rojo)",
+    aiTurn: "Turno del ordenador...",
+    youWin: "¡Has ganado! (Rojo)",
+    aiWin: "¡El ordenador ha ganado! (Amarillo)",
+    draw: "¡Empate!"
+  }
+};
+
+// Crear interfaz
+const selectorsDiv = document.getElementById("column-selectors");
+for (let c = 0; c < COLS; c++) {
+  const div = document.createElement("div");
+  div.textContent = c + 1;
+  div.addEventListener("click", () => handleColumnClick(c));
+  selectorsDiv.appendChild(div);
+}
+
+const gridDiv = document.getElementById("grid");
+for (let i = 0; i < ROWS * COLS; i++) {
+  const cell = document.createElement("div");
+  cell.className = "cell";
+  gridDiv.appendChild(cell);
+}
+
+function handleColumnClick(col) {
+  if (gameOver || currentPlayer !== 1) return;
+  const row = getAvailableRow(col);
+  if (row === -1) return;
+  highlightColumn(col, true);
+  setTimeout(() => {
+    dropPiece(row, col, 1);
+    const result = checkWinner(board);
+    if (result) {
+      gameOver = true;
+      highlightWinningPieces(result.positions);
+      showWinner(result.winner);
+      return;
+    } else if (isFull(board)) {
+      gameOver = true;
+      showDraw();
+      return;
+    }
+    currentPlayer = -1;
+    updateStatus();
+    setTimeout(aiMove, 500);
+  }, 200);
+}
+
+function highlightColumn(col, active) {
+  const highlight = document.createElement("div");
+  highlight.classList.add("highlight");
+  const cellSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--cell-size"));
+  const gap = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--gap"));
+  const left = col * (cellSize + gap);
+  highlight.style.position = "absolute";
+  highlight.style.left = left + "px";
+  highlight.style.top = "12px";
+  highlight.style.width = cellSize + "px";
+  highlight.style.height = (ROWS * (cellSize + gap) - gap) + "px";
+  highlight.style.borderRadius = "10px";
+  highlight.style.transition = "opacity 0.4s";
+  document.querySelector(".board-wrap").appendChild(highlight);
+  setTimeout(() => highlight.remove(), 300);
+}
+
+function getAvailableRow(col) {
+  for (let r = ROWS - 1; r >= 0; r--) if (board[r][col] === 0) return r;
+  return -1;
+}
+
+function dropPiece(row, col, player) {
+  board[row][col] = player;
+  const piece = document.createElement("div");
+  piece.className = "piece " + (player === 1 ? "red" : "yellow");
+  piece.dataset.row = row;
+  piece.dataset.col = col;
+  const topStart = 0;
+  const cellSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--cell-size"));
+  const gap = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--gap"));
+  const left = col * (cellSize + gap);
+  const top = row * (cellSize + gap);
+  piece.style.left = left + "px";
+  piece.style.top = topStart + "px";
+  document.getElementById("pieces-layer").appendChild(piece);
+  requestAnimationFrame(() => piece.style.top = top + "px");
+}
+
+function aiMove() {
+  const bestMove = getBestMove(board, difficulty);
+  const row = getAvailableRow(bestMove);
+  if (row === -1) return;
+  dropPiece(row, bestMove, -1);
+  const result = checkWinner(board);
+  if (result) {
+    gameOver = true;
+    highlightWinningPieces(result.positions);
+    showWinner(result.winner);
+    return;
+  } else if (isFull(board)) {
+    gameOver = true;
+    showDraw();
+    return;
+  }
+  currentPlayer = 1;
+  updateStatus();
+}
+
+function isFull(b) { return b.every(row => row.every(cell => cell !== 0)); }
+
+function checkWinner(board) {
+  const directions = [[0,1],[1,0],[1,1],[1,-1]];
+  for (let r=0; r<ROWS; r++){
+    for (let c=0; c<COLS; c++){
+      const player = board[r][c];
+      if (player===0) continue;
+      for (const [dr,dc] of directions){
+        const line = [[r,c]];
+        for (let i=1; i<4; i++){
+          const nr=r+dr*i, nc=c+dc*i;
+          if (nr<0||nr>=ROWS||nc<0||nc>=COLS||board[nr][nc]!==player) break;
+          line.push([nr,nc]);
+        }
+        if (line.length===4) return {winner:player, positions:line};
+      }
+    }
+  }
+  return null;
+}
+
+function highlightWinningPieces(positions) {
+  positions.forEach(([r, c]) => {
+    const piece = document.querySelector(`.piece[data-row='${r}'][data-col='${c}']`);
+    if (piece) piece.classList.add("winning-piece");
+  });
+}
+
+function evaluate(b){
+  let score=0;
+  const center=b.map(r=>r[Math.floor(COLS/2)]);
+  score+=center.filter(c=>c===-1).length*3;
+  return score;
+}
+
+function getBestMove(board, depth){
+  let bestScore=-Infinity, move=0;
+  for(let c=0;c<COLS;c++){
+    const r=getAvailableRow(c);
+    if(r===-1) continue;
+    const newBoard=board.map(r=>[...r]);
+    newBoard[r][c]=-1;
+    const score=minimax(newBoard,depth,false);
+    if(score>bestScore){bestScore=score;move=c;}
+  }
+  return move;
+}
+
+function minimax(b,depth,maximizing){
+  const result=checkWinner(b);
+  if(result){
+    if(result.winner===-1) return 1000;
+    else return -1000;
+  }
+  if(isFull(b)||depth===0) return evaluate(b);
+
+  if(maximizing){
+    let maxEval=-Infinity;
+    for(let c=0;c<COLS;c++){
+      const r=getAvailableRowInBoard(b,c);
+      if(r===-1) continue;
+      const nb=b.map(r=>[...r]);
+      nb[r][c]=-1;
+      const evalv=minimax(nb,depth-1,false);
+      maxEval=Math.max(maxEval,evalv);
+    }
+    return maxEval;
+  } else {
+    let minEval=Infinity;
+    for(let c=0;c<COLS;c++){
+      const r=getAvailableRowInBoard(b,c);
+      if(r===-1) continue;
+      const nb=b.map(r=>[...r]);
+      nb[r][c]=1;
+      const evalv=minimax(nb,depth-1,true);
+      minEval=Math.min(minEval,evalv);
+    }
+    return minEval;
+  }
+}
+
+function getAvailableRowInBoard(b,c){
+  for(let r=ROWS-1;r>=0;r--) if(b[r][c]===0) return r;
+  return -1;
+}
+
+function showWinner(winner){
+  const status=document.getElementById("status-text");
+  const indicator=document.getElementById("turn-indicator");
+  if(winner===1){
+    status.textContent=texts[lang].youWin;
+    indicator.style.background= "var(--red)";
+  } else {
+    status.textContent=texts[lang].aiWin;
+    indicator.style.background= "var(--yellow)";
+  }
+}
+
+function showDraw(){
+  document.getElementById("status-text").textContent=texts[lang].draw;
+}
+
+function updateStatus(){
+  const status=document.getElementById("status-text");
+  const indicator=document.getElementById("turn-indicator");
+  if(currentPlayer===1){
+    status.textContent=texts[lang].yourTurn;
+    indicator.style.background="var(--red)";
+  } else {
+    status.textContent=texts[lang].aiTurn;
+    indicator.style.background="var(--yellow)";
+  }
+}
+
+// reset
+document.getElementById("reset-btn").addEventListener("click", ()=>{
+  board=Array.from({length:ROWS},()=>Array(COLS).fill(0));
+  document.getElementById("pieces-layer").innerHTML="";
+  currentPlayer=1;
+  gameOver=false;
+  updateStatus();
+});
+
+// dificultad
+document.getElementById("difficulty").addEventListener("change", e=>{
+  difficulty=parseInt(e.target.value);
+});
+
+// idioma
+document.getElementById("lang-btn").addEventListener("click", ()=>{
+  lang = lang==="eu" ? "es" : "eu";
+  applyLanguage();
+});
+
+function applyLanguage(){
+  const t=texts[lang];
+  document.getElementById("title").textContent=t.title;
+  document.getElementById("difficulty-label").textContent=t.difficulty;
+  const opts=document.querySelectorAll("#difficulty option");
+  opts[0].textContent=t.diffLevels[0];
+  opts[1].textContent=t.diffLevels[1];
+  opts[2].textContent=t.diffLevels[2];
+  document.getElementById("reset-btn").textContent=t.reset;
+  updateStatus();
+  document.getElementById("lang-btn").textContent= lang==="eu"?"ES":"EU";
+}
+
+// init
+applyLanguage();
+</script>
+</body>
+</html>
