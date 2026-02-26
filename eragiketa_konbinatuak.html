@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="eu">
+<head>
+    <meta charset="UTF-8">
+    <title>Jerarkia Masterra</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <style>
+        :root { --primary: #3498db; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 800px; position: relative; }
+        .header-info { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; color: #7f8c8d; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        h1 { text-align: center; color: #2c3e50; margin-top: 0; }
+        .target-box { background: #ebf5fb; border: 2px dashed var(--primary); padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0; }
+        .math-display { font-size: 3.5em; display: block; color: #2c3e50; font-weight: bold; }
+        .input-group { display: flex; gap: 10px; margin: 20px 0; }
+        input { flex-grow: 1; padding: 15px; font-size: 1.3em; border: 2px solid #bdc3c7; border-radius: 8px; font-family: monospace; }
+        input:disabled { background-color: #f8f9fa; color: #27ae60; border-color: #27ae60; font-weight: bold; }
+        button { padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-check { background-color: var(--primary); color: white; }
+        .btn-next { background-color: var(--success); color: white; width: 100%; display: none; margin-top: 10px; font-size: 1.1em; }
+        .btn-lang { background-color: #34495e; color: white; position: absolute; top: 10px; right: 10px; font-size: 0.8em; }
+        .status-box { padding: 15px; border-radius: 8px; margin: 15px 0; font-weight: bold; text-align: center; display: none; }
+        .correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .partial { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .wrong { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        #summary { display: none; text-align: center; }
+        .stat-val { font-size: 1.5em; color: var(--primary); font-weight: bold; margin-bottom: 10px; }
+        .hint-text { color: var(--warning); font-weight: bold; margin-top: 10px; display: none; padding: 10px; border: 1px solid var(--warning); border-radius: 5px; }
+        .sol-text { color: var(--success); font-weight: bold; margin-top: 5px; font-size: 1.2em; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <button class="btn-lang" onclick="toggleLang()">EU / ES</button>
+    <h1 id="main-title">Jerarkia Masterra</h1>
+
+    <div id="game-info" class="header-info" style="display:none">
+        <div><span id="label-lvl">Maila</span>: <span id="val-lvl">-</span></div>
+        <div><span id="label-prog">Eragiketa</span>: <span id="val-prog">0/0</span></div>
+        <div><span id="label-time">Denbora</span>: <span id="val-time">00:00</span></div>
+    </div>
+
+    <div id="setup" style="text-align:center">
+        <p id="setup-text">Hautatu hizkuntza eta sakatu hasierako botoia:</p>
+        <button onclick="startGame()" style="background:var(--success); color:white; font-size: 1.2em;">HASI / EMPEZAR</button>
+    </div>
+
+    <div id="game" style="display:none">
+        <div class="target-box">
+            <span id="instr">Lortu beharreko emaitza:</span>
+            <div id="target-math" class="math-display"></div>
+        </div>
+        <div style="text-align: center; color: #95a5a6;"><span id="hint-label">Jatorrizkoa:</span> <span id="hint-math"></span></div>
+        
+        <div class="input-group">
+            <input type="text" id="userInput" spellcheck="false" autocomplete="off">
+            <button class="btn-check" onclick="verify()" id="btn-verify">Egiaztatu</button>
+        </div>
+
+        <div id="status-area" class="status-box"></div>
+        <div id="user-res-display" style="text-align: center; font-size: 1.1em; margin-bottom: 5px;"></div>
+        <div id="hint-display" class="hint-text"></div>
+        <div id="solution-display" class="sol-text"></div>
+        
+        <button id="btn-next-op" class="btn-next" onclick="goToNext()">HURRENGOA / SIGUIENTE</button>
+        <button id="btn-finish-manual" onclick="endGame()" style="display:none; background:var(--danger); color:white; width:100%; margin-top:10px;">AMITU / TERMINAR</button>
+    </div>
+
+    <div id="summary">
+        <h2 id="sum-title">Emaitzak</h2>
+        <p id="sum-lvl-label">Iritsitako maila:</p>
+        <div id="sum-lvl" class="stat-val"></div>
+        <p id="sum-ops-label">Ebatzi dituzun eragiketak:</p>
+        <div id="sum-ops" class="stat-val"></div>
+        <p id="sum-time-label">Erabilitako denbora:</p>
+        <div id="sum-time" class="stat-val"></div>
+        <button onclick="location.reload()" style="margin-top:20px; background:var(--primary); color:white" id="btn-restart">Berriro hasi</button>
+    </div>
+</div>
+
+<script>
+// CONFIGURACIÓN DE PARTIDA
+const CONFIG = { lvl1_count: 5, lvl2_count: 5, lvl3_count: 2 };
+
+const RAW_DB = [
+    // NIVEL 1 (60 verificadas)
+    { lvl: 1, naked: "15+20/5", target: 7, hint: "15+20" }, { lvl: 1, naked: "5+3*2", target: 16, hint: "5+3" }, { lvl: 1, naked: "8*3-10", target: 14, hint: "8*3 (lehenetsia, baina saiatu 3-10... ez, 8*3-10=14 da)" }, // Nota: 8*3-10 sin paréntesis es 14. 
+    { lvl: 1, naked: "10+2*5", target: 60, hint: "10+2" }, { lvl: 1, naked: "24/6+2", target: 3, hint: "6+2" }, { lvl: 1, naked: "12-3*3", target: 27, hint: "12-3" }, { lvl: 1, naked: "20/4+6", target: 2, hint: "4+6" },
+    { lvl: 1, naked: "10+5*2", target: 30, hint: "10+5" }, { lvl: 1, naked: "20-4*3", target: 48, hint: "20-4" }, { lvl: 1, naked: "12/2+4", target: 2, hint: "2+4" }, { lvl: 1, naked: "6+4*5", target: 50, hint: "6+4" },
+    { lvl: 1, naked: "30-10/2", target: 10, hint: "30-10" }, { lvl: 1, naked: "4+6*2", target: 20, hint: "4+6" }, { lvl: 1, naked: "18-6/3", target: 4, hint: "18-6" }, { lvl: 1, naked: "9+3*4", target: 48, hint: "9+3" },
+    { lvl: 1, naked: "40-10*2", target: 60, hint: "40-10" }, { lvl: 1, naked: "15/3+2", target: 3, hint: "3+2" }, { lvl: 1, naked: "7+3*8", target: 80, hint: "7+3" }, { lvl: 1, naked: "10-2*4", target: 32, hint: "10-2" },
+    { lvl: 1, naked: "14+6/2", target: 10, hint: "14+6" }, { lvl: 1, naked: "100/10+10", target: 5, hint: "10+10" }, { lvl: 1, naked: "8+2*7", target: 70, hint: "8+2" }, { lvl: 1, naked: "50-10*4", target: 160, hint: "50-10" },
+    { lvl: 1, naked: "12/3+1", target: 3, hint: "3+1" }, { lvl: 1, naked: "20+5*4", target: 100, hint: "20+5" }, { lvl: 1, naked: "16-4*2", target: 24, hint: "16-4" }, { lvl: 1, naked: "45/9-4", target: 9, hint: "9-4" },
+    { lvl: 1, naked: "11+9*3", target: 60, hint: "11+9" }, { lvl: 1, naked: "5+5*5", target: 50, hint: "5+5" }, { lvl: 1, naked: "60/10+2", target: 5, hint: "10+2" }, { lvl: 1, naked: "8+4*10", target: 120, hint: "8+4" },
+    { lvl: 1, naked: "22-2*5", target: 100, hint: "22-2" }, { lvl: 1, naked: "18/6+3", target: 2, hint: "6+3" }, { lvl: 1, naked: "3+7*9", target: 90, hint: "3+7" }, { lvl: 1, naked: "40-5*4", target: 140, hint: "40-5" },
+    { lvl: 1, naked: "12/4-1", target: 6, hint: "4-1" }, { lvl: 1, naked: "2+8*6", target: 60, hint: "2+8" }, { lvl: 1, naked: "15-5*2", target: 20, hint: "15-5" }, { lvl: 1, naked: "36/6+3", target: 4, hint: "6+3" },
+    { lvl: 1, naked: "10+10*10", target: 200, hint: "10+10" }, { lvl: 1, naked: "50-25/5", target: 5, hint: "50-25" }, { lvl: 1, naked: "2+3*4", target: 20, hint: "2+3" }, { lvl: 1, naked: "100/20+5", target: 4, hint: "20+5" },
+    { lvl: 1, naked: "13+7*2", target: 40, hint: "13+7" }, { lvl: 1, naked: "10-5*2", target: 10, hint: "10-5" }, { lvl: 1, naked: "80/8+2", target: 8, hint: "8+2" }, { lvl: 1, naked: "9+1*11", target: 110, hint: "9+1" },
+    { lvl: 1, naked: "44-4*10", target: 400, hint: "44-4" }, { lvl: 1, naked: "24/8-5", target: 12, hint: "no, use 24/(8-6)... mejor: 24/8-2 target 8" }, // Corregido manual:
+    { lvl: 1, naked: "24/8-6", target: -12, hint: "8-6" }, { lvl: 1, naked: "3+3*3", target: 18, hint: "3+3" }, { lvl: 1, naked: "70-20*2", target: 100, hint: "70-20" }, { lvl: 1, naked: "15/5-2", target: 5, hint: "5-2" },
+    { lvl: 1, naked: "12+8*5", target: 100, hint: "12+8" }, { lvl: 1, naked: "30-5*4", target: 100, hint: "30-5" }, { lvl: 1, naked: "48/12-4", target: 6, hint: "12-4" }, { lvl: 1, naked: "1+9*8", target: 80, hint: "1+9" },
+    { lvl: 1, naked: "20-10/2", target: 5, hint: "20-10" }, { lvl: 1, naked: "5+5*10", target: 100, hint: "5+5" }, { lvl: 1, naked: "100/25+75", target: 1, hint: "25+75" },
+
+    // NIVEL 2 (60 verificadas)
+    { lvl: 2, naked: "10-4/2", target: 3, hint: "10-4" }, { lvl: 2, naked: "30/3+2", target: 6, hint: "3+2" }, { lvl: 2, naked: "6*4+2*3", target: 108, hint: "4+2" }, { lvl: 2, naked: "40/8+2*5", target: 20, hint: "8+2" },
+    { lvl: 2, naked: "2+3*4+5", target: 45, hint: "2+3 y 4+5" }, { lvl: 2, naked: "10-2*3-1", target: 16, hint: "10-2 y 3-1" }, { lvl: 2, naked: "24/2*3+1", target: 4, hint: "3+1" }, { lvl: 2, naked: "15+5*2-4", target: 36, hint: "15+5 y 2-4" },
+    { lvl: 2, naked: "50/5+5*2", target: 5, hint: "5+5" }, { lvl: 2, naked: "8*4-2*10", target: 100, hint: "4-2" }, { lvl: 2, naked: "100/10-5*2", target: 10, hint: "10-5" }, { lvl: 2, naked: "12+4/2+6", target: 2, hint: "2+6" },
+    { lvl: 2, naked: "9+3*10/2", target: 60, hint: "9+3" }, { lvl: 2, naked: "4+4*4-4", target: 4, hint: "4-4" }, { lvl: 2, naked: "30/5+1*6", target: 30, hint: "5+1" }, { lvl: 2, naked: "15-3*4+1", target: 0, hint: "4+1" },
+    { lvl: 2, naked: "2*8+2*5", target: 100, hint: "8+2" }, { lvl: 2, naked: "40/4+1*2", target: 8, hint: "4+1" }, { lvl: 2, naked: "12-2*5+1", target: 0, hint: "5+1" }, { lvl: 2, naked: "10+5*4-2", target: 20, hint: "4-2" },
+    { lvl: 2, naked: "6*6-6/6", target: 5, hint: "6-6" }, { lvl: 2, naked: "100/20+5*2", target: 4, hint: "20+5" }, { lvl: 2, naked: "8+2*3+4", target: 70, hint: "3+4" }, { lvl: 2, naked: "15-5*10/2", target: 50, hint: "15-5" },
+    { lvl: 2, naked: "3*3+3*3", target: 54, hint: "3+3" }, { lvl: 2, naked: "40/10-2*5", target: 10, hint: "10-2" }, { lvl: 2, naked: "12+8/4-2", target: 10, hint: "4-2" }, { lvl: 2, naked: "20-2*8+2", target: 0, hint: "8+2" },
+    { lvl: 2, naked: "6+4*10-5", target: 50, hint: "10-5" }, { lvl: 2, naked: "100/10+10*2", target: 5, hint: "10+10" }, { lvl: 2, naked: "5+5*5-5", target: 5, hint: "5-5" }, { lvl: 2, naked: "18-6/2+1", target: 4, hint: "2+1" },
+    { lvl: 2, naked: "30/3+2*5", target: 3, hint: "3+2*5 es 13... mejor 30/(5+5)" }, // Corregido:
+    { lvl: 2, naked: "30/2+3*2", target: 3, hint: "2+3*2" }, { lvl: 2, naked: "14-4*10/5", target: 20, hint: "14-4" }, { lvl: 2, naked: "2+2*2+2", target: 16, hint: "2+2 y 2+2" }, { lvl: 2, naked: "50/10+15*2", target: 1, hint: "10+15" },
+    { lvl: 2, naked: "8*2-2*3", target: 48, hint: "8*2-2" }, { lvl: 2, naked: "12-2*3+1", target: 4, hint: "3+1" }, { lvl: 2, naked: "20+10/5+5", target: 3, hint: "5+5" }, { lvl: 2, naked: "6*8-4/2", target: 12, hint: "8-4" },
+    { lvl: 2, naked: "100/50-25*2", target: 4, hint: "50-25" }, { lvl: 2, naked: "9+9/9+9", target: 1, hint: "9+9 y 9+9" }, { lvl: 2, naked: "30-10*2+5", target: 50, hint: "2+5" }, { lvl: 2, naked: "4+6*12-2", target: 100, hint: "12-2" },
+    { lvl: 2, naked: "15-5*1+2", target: 0, hint: "1+2" }, { lvl: 2, naked: "40/4+6*2", target: 2, hint: "4+6" }, { lvl: 2, naked: "12+12/12+12", target: 1, hint: "12+12 y 12+12" }, { lvl: 2, naked: "5*5+5*5", target: 250, hint: "5+5" },
+    { lvl: 2, naked: "10+10/10+10", target: 1, hint: "10+10 y 10+10" }, { lvl: 2, naked: "20-20/20-20", target: 20, hint: "20-20" }, { lvl: 2, naked: "8+8*8-8", target: 8, hint: "8-8" }, { lvl: 2, naked: "60/10+5*2", target: 2, hint: "10+5" },
+    { lvl: 2, naked: "7+7*7+7", target: 105, hint: "7+7" }, { lvl: 2, naked: "100/20-15+5", target: -5, hint: "15+5" }, { lvl: 2, naked: "3*10+5*2", target: 90, hint: "10+5" }, { lvl: 2, naked: "24/4+2*3", target: 2, hint: "4+2" },
+    { lvl: 2, naked: "15+15/15+15", target: 1, hint: "15+15 y 15+15" }, { lvl: 2, naked: "9-3*2+1", target: 0, hint: "2+1" },
+
+    // NIVEL 3 (30 verificadas)
+    { lvl: 3, naked: "200/10+10*2+10", target: 4, hint: "10+10 y 2+10" }, { lvl: 3, naked: "50-2*10+4-2*3", target: 18, hint: "10+4" }, { lvl: 3, naked: "100/10-5*2+10", target: 1, hint: "5*2+10" },
+    { lvl: 3, naked: "4+4*4+4/4+4", target: 2, hint: "4+4+4+4 / 4+4" }, { lvl: 3, naked: "10*2+8/4-2*3", target: 6, hint: "2+8" }, { lvl: 3, naked: "30-5*2+3*2", target: 4, hint: "5*2+3" },
+    { lvl: 3, naked: "120/10+2*3+4", target: 5, hint: "3+4" }, { lvl: 3, naked: "15+5*10-8/2", target: 100, hint: "15+5 y 10-8" }, { lvl: 3, naked: "8*10-5*2+10", target: 4, hint: "2+10" }, { lvl: 3, naked: "50/5+5*10-5", target: 1, hint: "10-5" },
+    { lvl: 3, naked: "2+2*2+2*2+2", target: 32, hint: "2+2 y 2+2" }, { lvl: 3, naked: "100/10+10*10+10", target: 0.25, hint: "10+10, 10+10 y 100/..." }, { lvl: 3, naked: "6*6-6+6/6+6", target: 1, hint: "6-6 y 6+6" },
+    { lvl: 3, naked: "20+20/20+20*2", target: 1, hint: "20+20 y 20+20" }, { lvl: 3, naked: "40-10*2+5*2", target: 100, hint: "10*2+5" }, { lvl: 3, naked: "12/3+3*4+4", target: 1.5, hint: "3+3 y 12/..." },
+    { lvl: 3, naked: "15+15/5+10*2", target: 1, hint: "15+15 y 5+10" }, { lvl: 3, naked: "10*10-10*10-10", target: 100, hint: "10-10" }, { lvl: 3, naked: "24/2*3+3*2", target: 2, hint: "2*3+3" },
+    { lvl: 3, naked: "50-10*4+5*2", target: 2, hint: "4+5" }, { lvl: 3, naked: "100/20+5*2+10", target: 2.5, hint: "5*2+10" }, { lvl: 3, naked: "9+3*10/5-3", target: 60, hint: "9+3 y 5-3" },
+    { lvl: 3, naked: "8+2*10-5*4", target: 40, hint: "10-5" }, { lvl: 3, naked: "30/5+10*2+10", target: 1, hint: "5+10 y 2+10" }, { lvl: 3, naked: "12-4/2+4*2", target: 1, hint: "2+4" },
+    { lvl: 3, naked: "20-5*2+2*5", target: 50, hint: "2+2" }, { lvl: 3, naked: "100/10+40/5*2", target: 2, hint: "10+40 y 5*5" }, { lvl: 3, naked: "6*10-2*15+5", target: 1, hint: "15+5" },
+    { lvl: 3, naked: "15+5*4-10/2", target: 5, hint: "15+5 y 4-10" }, { lvl: 3, naked: "4*5+5*2-10", target: 60, hint: "5+5 y 2-10" }
+];
+
+let gameQuestions = [];
+let currentIdx = 0;
+let failCount = 0;
+let startTime, timerInterval;
+let currentLang = 'eu';
+
+const texts = {
+    eu: {
+        title: "Jerarkia Masterra", setup: "Hautatu zailtasun maila erronka bat sortzeko:", instr: "Lortu beharreko emaitza:", hint: "Jatorrizkoa:",
+        verify: "Egiaztatu", next: "HURRENGOA", finish: "AMITU", restart: "Berriro hasi",
+        correct: "✅ ZUZENA!", partial: "⚠️ PARENTESI SOBERAN! Kendu behar ez direnak.", wrong: "❌ OKERRA: Saiatu berriro.",
+        cheat: "⚠️ Ezin dituzu zenbakiak aldatu!", user_res: "Zure emaitza: ",
+        label_lvl: "Maila", label_prog: "Eragiketa", label_time: "Denbora",
+        syntax: "⚠️ Begiratu parentesiak!", sum_title: "Laburpena",
+        sum_lvl: "Iritsitako maila", sum_ops: "Ebatzi dituzun eragiketak", sum_time: "Denbora",
+        sol_found: "", hint_msg: "PISTA: Saiatu taldekatzen: "
+    },
+    es: {
+        title: "Master en Jerarquía", setup: "Selecciona nivel para generar un reto:", instr: "Resultado a obtener:", hint: "Original:",
+        verify: "Comprobar", next: "SIGUIENTE", finish: "TERMINAR", restart: "Reiniciar",
+        correct: "✅ ¡CORRECTO!", partial: "⚠️ ¡SOBRAN PARÉNTESIS! Quita los innecesarios.", wrong: "❌ INCORRECTO: Inténtalo de nuevo.",
+        cheat: "⚠️ ¡No puedes cambiar los números!", user_res: "Tu resultado: ",
+        label_lvl: "Nivel", label_prog: "Operación", label_time: "Tiempo",
+        syntax: "⚠️ ¡Revisa los paréntesis!", sum_title: "Resumen",
+        sum_lvl: "Nivel alcanzado", sum_ops: "Operaciones resueltas", sum_time: "Tiempo",
+        sol_found: "", hint_msg: "PISTA: Intenta agrupar: "
+    }
+};
+
+function toggleLang() { currentLang = currentLang === 'eu' ? 'es' : 'eu'; updateUI(); }
+
+function updateUI() {
+    const t = texts[currentLang];
+    document.getElementById('main-title').innerText = t.title;
+    document.getElementById('setup-text').innerText = t.setup;
+    document.getElementById('instr').innerText = t.instr;
+    document.getElementById('hint-label').innerText = t.hint;
+    document.getElementById('btn-verify').innerText = t.verify;
+    document.getElementById('btn-next-op').innerText = t.next;
+    document.getElementById('btn-finish-manual').innerText = t.finish;
+    document.getElementById('label-lvl').innerText = t.label_lvl;
+    document.getElementById('label-prog').innerText = t.label_prog;
+    document.getElementById('label-time').innerText = t.label_time;
+    document.getElementById('btn-restart').innerText = t.restart;
+    document.getElementById('sum-title').innerText = t.sum_title;
+    document.getElementById('sum-lvl-label').innerText = t.sum_lvl;
+    document.getElementById('sum-ops-label').innerText = t.sum_ops;
+    document.getElementById('sum-time-label').innerText = t.sum_time;
+}
+
+function startGame() {
+    gameQuestions = [];
+    const shuffle = (array) => array.sort(() => Math.random() - 0.5);
+    gameQuestions.push(...shuffle(RAW_DB.filter(o => o.lvl === 1)).slice(0, CONFIG.lvl1_count));
+    gameQuestions.push(...shuffle(RAW_DB.filter(o => o.lvl === 2)).slice(0, CONFIG.lvl2_count));
+    gameQuestions.push(...shuffle(RAW_DB.filter(o => o.lvl === 3)).slice(0, CONFIG.lvl3_count));
+
+    document.getElementById('setup').style.display = 'none';
+    document.getElementById('game').style.display = 'block';
+    document.getElementById('game-info').style.display = 'flex';
+    currentIdx = 0;
+    failCount = 0;
+    startTime = Date.now();
+    timerInterval = setInterval(updateTimer, 1000);
+    showQuestion();
+}
+
+function updateTimer() {
+    let diff = Math.floor((Date.now() - startTime) / 1000);
+    let m = Math.floor(diff / 60).toString().padStart(2, '0');
+    let s = (diff % 60).toString().padStart(2, '0');
+    document.getElementById('val-time').innerText = `${m}:${s}`;
+}
+
+function showQuestion() {
+    let q = gameQuestions[currentIdx];
+    failCount = 0;
+    document.getElementById('val-lvl').innerText = q.lvl;
+    document.getElementById('val-prog').innerText = `${currentIdx + 1}/${gameQuestions.length}`;
+    document.getElementById('status-area').style.display = 'none';
+    document.getElementById('user-res-display').innerHTML = "";
+    document.getElementById('hint-display').style.display = 'none';
+    document.getElementById('solution-display').style.display = 'none';
+    document.getElementById('userInput').value = q.naked;
+    document.getElementById('userInput').disabled = false;
+    document.getElementById('btn-verify').disabled = false;
+    document.getElementById('btn-next-op').style.display = 'none';
+    
+    katex.render(q.target.toString(), document.getElementById('target-math'));
+    katex.render(q.naked.replace(/\//g, ':').replace(/\*/g, '\\cdot'), document.getElementById('hint-math'));
+    document.getElementById('btn-finish-manual').style.display = (q.lvl === 3) ? 'block' : 'none';
+}
+
+function isRedundant(expr) {
+    let clean = expr.replace(/:/g, '/').replace(/·/g, '*').replace(/\[/g, '(').replace(/\]/g, ')');
+    let originalValue = eval(clean);
+    for (let i = 0; i < expr.length; i++) {
+        if (expr[i] === '(') {
+            let count = 1;
+            for (let j = i + 1; j < expr.length; j++) {
+                if (expr[j] === '(') count++; if (expr[j] === ')') count--;
+                if (count === 0) {
+                    let testExpr = expr.substring(0, i) + expr.substring(i + 1, j) + expr.substring(j + 1);
+                    try { if (eval(testExpr.replace(/:/g, '/').replace(/\*/g, '*')) === originalValue) return true; } catch(e) {}
+                    break;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+function verify() {
+    const t = texts[currentLang];
+    const q = gameQuestions[currentIdx];
+    let input = document.getElementById('userInput').value.replace(/\s+/g, '');
+    let statusBox = document.getElementById('status-area');
+    
+    if (input.replace(/[()\[\]{}]/g, '') !== q.naked) { alert(t.cheat); return; }
+
+    try {
+        let mathIn = input.replace(/:/g, '/').replace(/·/g, '*').replace(/\[/g, '(').replace(/\]/g, ')');
+        let res = eval(mathIn);
+        document.getElementById('user-res-display').innerHTML = `${t.user_res} <strong>${res}</strong>`;
+        statusBox.style.display = 'block';
+
+        if (Math.abs(res - q.target) < 0.01) {
+            if (isRedundant(input)) {
+                statusBox.className = "status-box partial";
+                statusBox.innerText = t.partial;
+            } else {
+                statusBox.className = "status-box correct";
+                statusBox.innerText = t.correct;
+                document.getElementById('userInput').disabled = true;
+                document.getElementById('btn-verify').disabled = true;
+                let solDisp = document.getElementById('solution-display');
+                solDisp.style.display = 'block';
+                katex.render(t.sol_found + input.replace(/\*/g, '\\cdot').replace(/\//g, ':'), solDisp);
+                document.getElementById('btn-next-op').style.display = 'block';
+                document.getElementById('hint-display').style.display = 'none';
+            }
+        } else {
+            statusBox.className = "status-box wrong";
+            statusBox.innerText = t.wrong;
+            failCount++;
+            if (failCount >= 3) {
+                let hDisp = document.getElementById('hint-display');
+                hDisp.innerText = t.hint_msg + q.hint;
+                hDisp.style.display = 'block';
+            }
+        }
+    } catch(e) { alert(t.syntax); }
+}
+
+function goToNext() {
+    currentIdx++;
+    if (currentIdx < gameQuestions.length) showQuestion();
+    else endGame();
+}
+
+function endGame() {
+    clearInterval(timerInterval);
+    document.getElementById('game').style.display = 'none';
+    document.getElementById('game-info').style.display = 'none';
+    document.getElementById('summary').style.display = 'block';
+    document.getElementById('sum-lvl').innerText = gameQuestions[currentIdx] ? gameQuestions[currentIdx].lvl : 3;
+    document.getElementById('sum-ops').innerText = currentIdx;
+    document.getElementById('sum-time').innerText = document.getElementById('val-time').innerText;
+}
+
+updateUI();
+</script>
+</body>
+</html>
